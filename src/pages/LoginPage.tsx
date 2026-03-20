@@ -137,12 +137,7 @@ export const LoginPage = () => {
           </div>
         </form>
 
-        {loginType === 'admin' && (
-          <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center">
-            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Default Admin Account</p>
-            <p className="text-xs text-amber-200/60 font-medium">백동희 또는 800101 / 01011112222 / admin</p>
-          </div>
-        )}
+        {/* Removed default admin hint */}
       </div>
     </div>
   );

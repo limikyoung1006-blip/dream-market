@@ -29,8 +29,10 @@ function App() {
             <h1 className="text-xl font-bold tracking-tight text-slate-900">드림마켓</h1>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
-              <img src="/church-logo.png" alt="예수인교회" className="h-8 w-auto object-contain" />
+            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border border-slate-100 shadow-sm">
+              <span className="text-xs font-black text-slate-800 tracking-tight">{currentUser.name} {isAdmin ? <span className="text-amber-500 ml-0.5">관리자</span> : '회원'}</span>
+              <div className="w-px h-3 bg-slate-200 mx-1" />
+              <img src="/church-logo.png" alt="예수인교회" className="h-6 w-auto object-contain" />
             </div>
             <button 
               onClick={() => setCurrentUser(null)}
