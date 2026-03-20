@@ -392,35 +392,30 @@ export const AdminPage = () => {
             <div className="divide-y divide-slate-50">
               {filteredProducts.map(product => (
                 <div key={product.id} className="p-5 flex items-center justify-between hover:bg-slate-50/80 transition-all group border-b border-slate-50 last:border-0">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-slate-800 text-base leading-none truncate">{product.name}</p>
+                  <div className="flex-1 min-w-0 pr-4">
+                    <p className="font-black text-slate-800 text-base leading-tight break-all">{product.name}</p>
                     <p className="text-[9px] text-slate-400 font-bold mt-1 uppercase">#{product.id.slice(-6)}</p>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <p className="text-[8px] text-slate-400 font-black uppercase mb-0.5">Price</p>
-                      <p className="text-primary-600 font-black text-base leading-none">{product.price.toLocaleString()}원</p>
-                    </div>
-
-                    <div className="text-center min-w-[60px]">
-                      <p className="text-[8px] text-slate-400 font-black uppercase mb-1">Stock</p>
-                      <div className={`px-2 py-1 rounded-lg text-[10px] font-black leading-none ${product.stock < 10 ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-500'}`}>
-                        Q: {product.stock}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex flex-col items-end gap-1.5 min-w-[70px]">
+                      <p className="text-primary-600 font-black text-sm leading-none whitespace-nowrap">{product.price.toLocaleString()}원</p>
+                      <div className={`px-2 py-1 rounded-md text-[9px] font-black leading-none ${product.stock < 10 ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-500'}`}>
+                        재고: {product.stock}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => openProductEditModal(product)} className="w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all">
-                        <Edit2 size={16} />
+                    <div className="flex items-center gap-1.5 border-l border-slate-100 pl-3">
+                      <button onClick={() => openProductEditModal(product)} className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all">
+                        <Edit2 size={14} />
                       </button>
                       
-                      <div className="flex flex-col gap-0.5">
-                        <button onClick={() => updateStock(product.id, 5)} className="w-[34px] h-[20px] rounded-md bg-slate-900 text-white flex items-center justify-center hover:bg-primary-600 transition-all text-[10px]">
-                          <Plus size={12} />
+                      <div className="flex flex-col gap-1">
+                        <button onClick={() => updateStock(product.id, 5)} className="w-[32px] h-[17px] rounded-md bg-slate-900 text-white flex items-center justify-center hover:bg-primary-600 transition-all text-[10px]">
+                          <Plus size={10} />
                         </button>
-                        <button onClick={() => updateStock(product.id, -5)} className="w-[34px] h-[20px] rounded-md bg-slate-900 text-white flex items-center justify-center hover:bg-red-500 transition-all text-[10px]">
-                          <Minus size={12} />
+                        <button onClick={() => updateStock(product.id, -5)} className="w-[32px] h-[17px] rounded-md bg-slate-900 text-white flex items-center justify-center hover:bg-red-500 transition-all text-[10px]">
+                          <Minus size={10} />
                         </button>
                       </div>
                     </div>

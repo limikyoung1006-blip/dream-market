@@ -101,17 +101,17 @@ export const StorePage = () => {
               >
                 <div className="absolute top-0 left-0 w-1 h-full bg-primary-500/50" />
                 <div className="flex flex-1 items-center gap-4 md:gap-8 min-w-0 pr-2">
-                  <div className="min-w-[100px] md:min-w-[120px] max-w-[180px]">
-                    <p className="font-black text-white text-lg md:text-xl tracking-tight leading-tight truncate">{p.name}</p>
+                  <div className="flex-1">
+                    <p className="font-black text-white text-lg md:text-xl tracking-tight leading-tight break-all">{p.name}</p>
                     <div className={`inline-flex items-center gap-1 mt-1 text-[8px] md:text-[9px] font-black uppercase tracking-wider ${p.stock < 10 ? 'text-red-400' : 'text-slate-500'}`}>
                       <Package size={10} /> {p.stock} In Stock
                     </div>
                   </div>
                   
-                  <div className="flex items-center">
-                    <div className="flex flex-col">
+                  <div className="flex items-center shrink-0">
+                    <div className="flex flex-col items-end">
                       <span className="text-[9px] md:text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1.5">Price</span>
-                      <span className="text-primary-400 font-black text-lg md:text-xl leading-none">{p.price.toLocaleString()} 원</span>
+                      <span className="text-primary-400 font-black text-lg md:text-xl leading-none whitespace-nowrap">{p.price.toLocaleString()} 원</span>
                     </div>
                   </div>
                 </div>
