@@ -35,7 +35,7 @@ export const StorePage = () => {
     setBasket(prev => prev.filter(item => item.productId !== id));
   };
 
-  const handleScanSuccess = (userId: string) => {
+  const handleScanSuccess = async (userId: string) => {
     const user = users.find(u => u.id === userId);
     if (!user) {
       setResult({ success: false, message: '등록되지 않은 회원입니다.' });
@@ -56,7 +56,7 @@ export const StorePage = () => {
       price: item.price
     }));
 
-    const success = updatePoints(
+    const success = await updatePoints(
       userId, 
       totalAmount, 
       'use', 

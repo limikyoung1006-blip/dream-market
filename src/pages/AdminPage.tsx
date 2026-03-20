@@ -3,7 +3,7 @@ import { useMarketStore } from '../store/useMarketStore';
 import { Users, Coins, Plus, Search, Package, X, Save, Download, FileText, Edit2, Minus, Trash2, ShieldCheck } from 'lucide-react';
 
 export const AdminPage = () => {
-  const { users, products, addUser, updateUser, deleteUser, addProduct, updateStock, updatePoints, transactions, currentUser } = useMarketStore();
+  const { users, products, addUser, updateUser, deleteUser, addProduct, updateProduct, updateStock, updatePoints, transactions, currentUser } = useMarketStore();
   const isSuperAdmin = currentUser?.id === 'admin-1';
   const [activeSubTab, setActiveSubTab] = useState<'members' | 'admins' | 'inventory' | 'reports'>('members');
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,7 +38,7 @@ export const AdminPage = () => {
     stock: 0
   });
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanInputPhone = newUser.phoneMain.replace(/[^0-9]/g, '');
     const fullPhone = cleanInputPhone.startsWith('010') && cleanInputPhone.length >= 10 
@@ -55,11 +55,11 @@ export const AdminPage = () => {
     };
 
     if (editingUser) {
-      updateUser(editingUser.id, trimmedUser);
+      await updateUser(editingUser.id, trimmedUser);
       setEditingUser(null);
     } else {
       const id = `${newUser.role}-${Date.now()}`;
-      addUser({ ...trimmedUser, id, points: 0 });
+      await addUser({ ...trimmedUser, id, points: 0 });
     }
     setIsUserModalOpen(false);
     setNewUser({ name: '', birthdate: '', phone: '', phoneMain: '', password: '', role: 'user', grade: '기타', address: '' });
@@ -81,23 +81,22 @@ export const AdminPage = () => {
     setIsUserModalOpen(true);
   };
 
-  const handleDeleteUser = (userId: string, e: React.MouseEvent) => {
+  const handleDeleteUser = async (userId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('정말로 이 회원을 삭제하시겠습니까? 관련 데이터가 모두 삭제됩니다.')) {
-      deleteUser(userId);
+      await deleteUser(userId);
       setExpandedUserId(null);
     }
   };
 
-  const handleAddProduct = (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingProduct) {
-      const { updateProduct } = useMarketStore.getState();
-      updateProduct(editingProduct.id, newProduct);
+      await updateProduct(editingProduct.id, newProduct);
       setEditingProduct(null);
     } else {
       const id = `p-${Date.now()}`;
-      addProduct({ ...newProduct, id, marketPrice: 0 });
+      await addProduct({ ...newProduct, id, marketPrice: 0 });
     }
     setIsProductModalOpen(false);
     setNewProduct({ name: '', price: 0, stock: 0 });
@@ -156,24 +155,25 @@ export const AdminPage = () => {
     p.name.includes(searchTerm)
   );
 
-  const handleBulkCharge = () => {
+  const handleBulkCharge = async () => {
     if (confirm('모든 일반 회원에게 월간 포인트를 지급하시겠습니까?')) {
-      users.filter(u => u.role === 'user').forEach(u => {
+      const targets = users.filter(u => u.role === 'user');
+      for (const u of targets) {
         const amount = u.grade === '미혼모' ? 100000 : u.grade === '차상위' ? 50000 : 30000;
-        updatePoints(u.id, amount, 'charge', '월간 정기 정산');
-      });
+        await updatePoints(u.id, amount, 'charge', '월간 정기 정산');
+      }
       alert('일괄 충전이 완료되었습니다.');
     }
   };
 
-  const handleSelectedCharge = (e: React.FormEvent) => {
+  const handleSelectedCharge = async (e: React.FormEvent) => {
     e.preventDefault();
     if (chargingTarget === 'individual' && individualTargetId) {
-      updatePoints(individualTargetId, chargeAmount, 'charge', chargeDescription);
+      await updatePoints(individualTargetId, chargeAmount, 'charge', chargeDescription);
     } else if (chargingTarget === 'selected') {
-      selectedUsers.forEach(id => {
-        updatePoints(id, chargeAmount, 'charge', chargeDescription);
-      });
+      for (const id of selectedUsers) {
+        await updatePoints(id, chargeAmount, 'charge', chargeDescription);
+      }
       setSelectedUsers([]);
     }
     setIsChargeModalOpen(false);

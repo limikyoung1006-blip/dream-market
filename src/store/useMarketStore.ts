@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { supabase } from '../lib/supabase';
 
 interface User {
   id: string;
@@ -44,127 +45,186 @@ interface MarketStore {
   products: Product[];
   transactions: Transaction[];
   currentUser: User | null;
+  isLoading: boolean;
+  
+  // Actions
+  fetchInitialData: () => Promise<void>;
   setCurrentUser: (user: User | null) => void;
-  addUser: (user: User) => void;
-  updateUser: (userId: string, updates: Partial<User>) => void;
-  deleteUser: (userId: string) => void;
-  addProduct: (product: Product) => void;
-  updateProduct: (productId: string, updates: Partial<Product>) => void;
-  deleteProduct: (productId: string) => void;
-  updateStock: (productId: string, quantity: number) => void;
-  updatePoints: (userId: string, amount: number, type: 'charge' | 'use', desc: string, items?: TransactionItem[], benefit?: number) => boolean;
+  addUser: (user: User) => Promise<void>;
+  updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
+  addProduct: (product: Product) => Promise<void>;
+  updateProduct: (productId: string, updates: Partial<Product>) => Promise<void>;
+  deleteProduct: (productId: string) => Promise<void>;
+  updateStock: (productId: string, quantity: number) => Promise<void>;
+  updatePoints: (userId: string, amount: number, type: 'charge' | 'use', desc: string, items?: TransactionItem[], benefit?: number) => Promise<boolean>;
 }
-
-// Mock initial data
-const INITIAL_USERS: User[] = [
-  { 
-    id: 'user-1', 
-    name: '홍길동', 
-    birthdate: '900101', 
-    phone: '01012345678', 
-    password: '123', 
-    role: 'user', 
-    grade: 'A', 
-    points: 100000 
-  },
-  { 
-    id: 'admin-1', 
-    name: '백동희', 
-    birthdate: '800101', 
-    phone: '01011112222', 
-    password: 'admin', 
-    role: 'admin', 
-    grade: 'A', 
-    points: 0 
-  },
-];
-
-const INITIAL_PRODUCTS: Product[] = [
-  { id: 'p1', name: '햇반 210g', price: 1000, marketPrice: 1500, stock: 100 },
-  { id: 'p2', name: '신라면 5봉', price: 3000, marketPrice: 4500, stock: 50 },
-  { id: 'p3', name: '계란 10구', price: 2000, marketPrice: 3500, stock: 30 },
-];
 
 export const useMarketStore = create<MarketStore>()(
   persist(
     (set, get) => ({
-      users: INITIAL_USERS,
-      products: INITIAL_PRODUCTS,
+      users: [],
+      products: [],
       transactions: [],
       currentUser: null,
+      isLoading: false,
+
+      fetchInitialData: async () => {
+        set({ isLoading: true });
+        try {
+          const [usersRes, productsRes, transactionsRes] = await Promise.all([
+            supabase.from('dream_users').select('*').order('name'),
+            supabase.from('dream_products').select('*').order('name'),
+            supabase.from('dream_transactions').select('*').order('timestamp', { ascending: false })
+          ]);
+
+          set({
+            users: (usersRes.data || []).map(u => ({ ...u, address: u.address || '' })),
+            products: (productsRes.data || []).map(p => ({ ...p, marketPrice: p.market_price, market_price: undefined })),
+            transactions: (transactionsRes.data || []).map(t => ({ 
+              ...t, 
+              userId: t.user_id, 
+              benefitAmount: t.benefit_amount,
+              user_id: undefined,
+              benefit_amount: undefined
+            })),
+            isLoading: false
+          });
+        } catch (error) {
+          console.error('Error fetching initial data:', error);
+          set({ isLoading: false });
+        }
+      },
       
       setCurrentUser: (user) => set({ currentUser: user }),
       
-      addUser: (user) => {
-        // Ensure clean phone number
+      addUser: async (user) => {
         const cleanPhone = user.phone.replace(/[^0-9]/g, '');
-        set((state) => ({ users: [...state.users, { ...user, phone: cleanPhone }] }));
+        const newUser = { ...user, phone: cleanPhone };
+        const { error } = await supabase.from('dream_users').insert(newUser);
+        if (!error) {
+          set((state) => ({ users: [...state.users, newUser] }));
+        }
       },
 
-      updateUser: (userId, updates) => set((state) => {
-        const updatedUsers = state.users.map(u => {
-          if (u.id === userId) {
-            const next = { ...u, ...updates };
-            if (updates.phone) next.phone = updates.phone.replace(/[^0-9]/g, '');
-            return next;
-          }
-          return u;
-        });
+      updateUser: async (userId, updates) => {
+        const nextUpdates = { ...updates };
+        if (updates.phone) nextUpdates.phone = updates.phone.replace(/[^0-9]/g, '');
         
-        const newCurrentUser = state.currentUser?.id === userId 
-          ? updatedUsers.find(u => u.id === userId) || null 
-          : state.currentUser;
-          
-        return { users: updatedUsers, currentUser: newCurrentUser };
-      }),
+        const { error } = await supabase.from('dream_users').update(nextUpdates).eq('id', userId);
+        if (!error) {
+          set((state) => {
+            const updatedUsers = state.users.map(u => u.id === userId ? { ...u, ...nextUpdates } : u);
+            const newCurrentUser = state.currentUser?.id === userId 
+              ? updatedUsers.find(u => u.id === userId) || null 
+              : state.currentUser;
+            return { users: updatedUsers, currentUser: newCurrentUser };
+          });
+        }
+      },
 
-      deleteUser: (userId) => set((state) => ({
-        users: state.users.filter(u => u.id !== userId)
-      })),
+      deleteUser: async (userId) => {
+        const { error } = await supabase.from('dream_users').delete().eq('id', userId);
+        if (!error) {
+          set((state) => ({ users: state.users.filter(u => u.id !== userId) }));
+        }
+      },
       
-      addProduct: (product) => set((state) => ({ products: [...state.products, product] })),
+      addProduct: async (product) => {
+        const { error } = await supabase.from('dream_products').insert({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          market_price: product.marketPrice,
+          stock: product.stock
+        });
+        if (!error) {
+          set((state) => ({ products: [...state.products, product] }));
+        }
+      },
 
-      updateProduct: (productId, updates) => set((state) => ({
-        products: state.products.map(p => p.id === productId ? { ...p, ...updates } : p)
-      })),
+      updateProduct: async (productId, updates) => {
+        const dbUpdates: any = { ...updates };
+        if (updates.marketPrice !== undefined) {
+          dbUpdates.market_price = updates.marketPrice;
+          delete dbUpdates.marketPrice;
+        }
+        
+        const { error } = await supabase.from('dream_products').update(dbUpdates).eq('id', productId);
+        if (!error) {
+          set((state) => ({
+            products: state.products.map(p => p.id === productId ? { ...p, ...updates } : p)
+          }));
+        }
+      },
 
-      deleteProduct: (productId) => set((state) => ({
-        products: state.products.filter(p => p.id !== productId)
-      })),
+      deleteProduct: async (productId) => {
+        const { error } = await supabase.from('dream_products').delete().eq('id', productId);
+        if (!error) {
+          set((state) => ({ products: state.products.filter(p => p.id !== productId) }));
+        }
+      },
 
-      updateStock: (productId, quantity) => set((state) => ({
-        products: state.products.map(p => p.id === productId ? { ...p, stock: Math.max(0, p.stock + quantity) } : p)
-      })),
+      updateStock: async (productId, quantity) => {
+        const product = get().products.find(p => p.id === productId);
+        if (!product) return;
+        const newStock = Math.max(0, product.stock + quantity);
+        
+        const { error } = await supabase.from('dream_products').update({ stock: newStock }).eq('id', productId);
+        if (!error) {
+          set((state) => ({
+            products: state.products.map(p => p.id === productId ? { ...p, stock: newStock } : p)
+          }));
+        }
+      },
       
-      updatePoints: (userId, amount, type, desc, items, benefit = 0) => {
+      updatePoints: async (userId, amount, type, desc, items, benefit = 0) => {
         const user = get().users.find(u => u.id === userId);
         if (!user) return false;
-        
         if (type === 'use' && user.points < amount) return false;
         
         const newPoints = type === 'use' ? user.points - amount : user.points + amount;
         
+        // 1. Update User Points
+        const { error: userError } = await supabase.from('dream_users').update({ points: newPoints }).eq('id', userId);
+        if (userError) return false;
+
+        // 2. Create Transaction
+        const transaction: Transaction = {
+          id: Math.random().toString(36).substr(2, 9),
+          userId,
+          type,
+          amount,
+          benefitAmount: benefit,
+          timestamp: Date.now(),
+          description: desc,
+          items
+        };
+
+        const { error: txError } = await supabase.from('dream_transactions').insert({
+          id: transaction.id,
+          user_id: transaction.userId,
+          type: transaction.type,
+          amount: transaction.amount,
+          benefit_amount: transaction.benefitAmount,
+          description: transaction.description,
+          items: transaction.items,
+          timestamp: transaction.timestamp
+        });
+
+        if (txError) return false;
+
+        // 3. Update Stock locally & DB (if use)
         if (type === 'use' && items) {
-          items.forEach(item => {
-            get().updateStock(item.productId, -item.quantity);
-          });
+          for (const item of items) {
+            await get().updateStock(item.productId, -item.quantity);
+          }
         }
 
+        // Update local state
         set((state) => ({
           users: state.users.map(u => u.id === userId ? { ...u, points: newPoints } : u),
-          transactions: [
-            {
-              id: Math.random().toString(36).substr(2, 9),
-              userId,
-              type,
-              amount,
-              benefitAmount: benefit,
-              timestamp: Date.now(),
-              description: desc,
-              items
-            },
-            ...state.transactions
-          ],
+          transactions: [transaction, ...state.transactions],
           currentUser: state.currentUser?.id === userId ? { ...state.currentUser, points: newPoints } : state.currentUser
         }));
         
@@ -174,7 +234,10 @@ export const useMarketStore = create<MarketStore>()(
     {
       name: 'dream-market-storage',
       storage: createJSONStorage(() => localStorage),
+      // Prevent syncing temporary states
+      partialize: (state) => ({ currentUser: state.currentUser }),
     }
   )
 );
+
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMarketStore } from './store/useMarketStore'
 import { LoginPage } from './pages/LoginPage'
 import { UserPage } from './pages/UserPage'
@@ -8,8 +8,21 @@ import { HomePage } from './pages/HomePage'
 import { LogOut, Wallet, Smartphone, ShieldCheck, Home } from 'lucide-react'
 
 function App() {
-  const { currentUser, setCurrentUser } = useMarketStore()
+  const { currentUser, setCurrentUser, fetchInitialData, isLoading } = useMarketStore()
   const [activeTab, setActiveTab] = useState<'home' | 'user' | 'store' | 'admin'>('home')
+
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+        <p className="text-primary-500 font-bold animate-pulse uppercase tracking-widest text-xs">Syncing with Dream Cloud...</p>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return <LoginPage />
