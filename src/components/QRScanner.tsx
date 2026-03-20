@@ -42,10 +42,10 @@ export const QRScanner = ({ onScanSuccess, onScanFailure }: QRScannerProps) => {
   }, [onScanSuccess, onScanFailure]);
 
   return (
-    <div className="w-full max-w-sm mx-auto overflow-hidden rounded-3xl border-4 border-slate-900 bg-black">
+    <div className="w-full max-w-sm mx-auto overflow-hidden rounded-[2.5rem] bg-black shadow-2xl">
       <div id="qr-reader" className="w-full"></div>
       {!isScannerReady && (
-        <div className="h-64 flex items-center justify-center text-white/50">
+        <div className="h-64 flex items-center justify-center text-white/50 bg-black font-bold">
           카메라 초기화 중...
         </div>
       )}

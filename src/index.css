@@ -80,3 +80,46 @@ body {
 .animate-shimmer {
   animation: shimmer 2s infinite;
 }
+
+/* QR 스캐너 UI 강제 스타일링 */
+#qr-reader {
+  border: none !important;
+  background: black !important;
+}
+
+#qr-reader__dashboard {
+  padding: 1rem !important;
+  background: black !important;
+  color: white !important;
+}
+
+#qr-reader__status_span {
+  @apply text-white/70 font-medium mb-4 block;
+}
+
+#qr-reader button, 
+#html5-qrcode-button-camera-start,
+#html5-qrcode-button-camera-stop {
+  @apply px-6 py-3 bg-primary-600 text-white rounded-2xl font-bold border-none shadow-lg transition-all active:scale-95 m-2 cursor-pointer !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#qr-reader a, #html5-qrcode-anchor-scan-type-change {
+  @apply text-primary-400 font-bold underline m-3 inline-block cursor-pointer !important;
+  text-decoration: underline !important;
+}
+
+#qr-reader span {
+  @apply text-white/90 font-bold block mb-2 !important;
+}
+
+#qr-reader select {
+  @apply bg-slate-800 text-white border border-slate-700 rounded-xl px-3 py-2 my-3 mx-2 outline-none focus:ring-2 focus:ring-primary-500 !important;
+}
+
+#qr-reader__scan_region {
+  border: 4px solid rgba(59, 130, 246, 0.3) !important;
+  border-radius: 2rem !important;
+  overflow: hidden;
+}
