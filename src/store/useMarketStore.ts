@@ -1,10 +1,11 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface User {
   id: string;
   name: string;
   birthdate: string; // YYYYMMDD
-  phone: string;     // Last 4 digits
+  phone: string;     // Full digits without hyphens
   password: string;
   address?: string;  // 주소
   role: 'user' | 'admin';
@@ -84,72 +85,96 @@ const INITIAL_PRODUCTS: Product[] = [
   { id: 'p3', name: '계란 10구', price: 2000, marketPrice: 3500, stock: 30 },
 ];
 
-export const useMarketStore = create<MarketStore>((set, get) => ({
-  users: INITIAL_USERS,
-  products: INITIAL_PRODUCTS,
-  transactions: [],
-  currentUser: null, // 초기에는 비로그인 상태
-  
-  setCurrentUser: (user) => set({ currentUser: user }),
-  
-  addUser: (user) => set((state) => ({ users: [...state.users, user] })),
+export const useMarketStore = create<MarketStore>()(
+  persist(
+    (set, get) => ({
+      users: INITIAL_USERS,
+      products: INITIAL_PRODUCTS,
+      transactions: [],
+      currentUser: null,
+      
+      setCurrentUser: (user) => set({ currentUser: user }),
+      
+      addUser: (user) => {
+        // Ensure clean phone number
+        const cleanPhone = user.phone.replace(/[^0-9]/g, '');
+        set((state) => ({ users: [...state.users, { ...user, phone: cleanPhone }] }));
+      },
 
-  updateUser: (userId, updates) => set((state) => ({
-    users: state.users.map(u => u.id === userId ? { ...u, ...updates } : u),
-    currentUser: state.currentUser?.id === userId ? { ...state.currentUser, ...updates } : state.currentUser
-  })),
+      updateUser: (userId, updates) => set((state) => {
+        const updatedUsers = state.users.map(u => {
+          if (u.id === userId) {
+            const next = { ...u, ...updates };
+            if (updates.phone) next.phone = updates.phone.replace(/[^0-9]/g, '');
+            return next;
+          }
+          return u;
+        });
+        
+        const newCurrentUser = state.currentUser?.id === userId 
+          ? updatedUsers.find(u => u.id === userId) || null 
+          : state.currentUser;
+          
+        return { users: updatedUsers, currentUser: newCurrentUser };
+      }),
 
-  deleteUser: (userId) => set((state) => ({
-    users: state.users.filter(u => u.id !== userId)
-  })),
-  
-  addProduct: (product) => set((state) => ({ products: [...state.products, product] })),
+      deleteUser: (userId) => set((state) => ({
+        users: state.users.filter(u => u.id !== userId)
+      })),
+      
+      addProduct: (product) => set((state) => ({ products: [...state.products, product] })),
 
-  updateProduct: (productId, updates) => set((state) => ({
-    products: state.products.map(p => p.id === productId ? { ...p, ...updates } : p)
-  })),
+      updateProduct: (productId, updates) => set((state) => ({
+        products: state.products.map(p => p.id === productId ? { ...p, ...updates } : p)
+      })),
 
-  deleteProduct: (productId) => set((state) => ({
-    products: state.products.filter(p => p.id !== productId)
-  })),
+      deleteProduct: (productId) => set((state) => ({
+        products: state.products.filter(p => p.id !== productId)
+      })),
 
-  updateStock: (productId, quantity) => set((state) => ({
-    products: state.products.map(p => p.id === productId ? { ...p, stock: Math.max(0, p.stock + quantity) } : p)
-  })),
-  
-  updatePoints: (userId, amount, type, desc, items, benefit = 0) => {
-    const user = get().users.find(u => u.id === userId);
-    if (!user) return false;
-    
-    if (type === 'use' && user.points < amount) return false;
-    
-    const newPoints = type === 'use' ? user.points - amount : user.points + amount;
-    
-    // 재고 차산 로직 (결제 시)
-    if (type === 'use' && items) {
-      items.forEach(item => {
-        get().updateStock(item.productId, -item.quantity);
-      });
+      updateStock: (productId, quantity) => set((state) => ({
+        products: state.products.map(p => p.id === productId ? { ...p, stock: Math.max(0, p.stock + quantity) } : p)
+      })),
+      
+      updatePoints: (userId, amount, type, desc, items, benefit = 0) => {
+        const user = get().users.find(u => u.id === userId);
+        if (!user) return false;
+        
+        if (type === 'use' && user.points < amount) return false;
+        
+        const newPoints = type === 'use' ? user.points - amount : user.points + amount;
+        
+        if (type === 'use' && items) {
+          items.forEach(item => {
+            get().updateStock(item.productId, -item.quantity);
+          });
+        }
+
+        set((state) => ({
+          users: state.users.map(u => u.id === userId ? { ...u, points: newPoints } : u),
+          transactions: [
+            {
+              id: Math.random().toString(36).substr(2, 9),
+              userId,
+              type,
+              amount,
+              benefitAmount: benefit,
+              timestamp: Date.now(),
+              description: desc,
+              items
+            },
+            ...state.transactions
+          ],
+          currentUser: state.currentUser?.id === userId ? { ...state.currentUser, points: newPoints } : state.currentUser
+        }));
+        
+        return true;
+      }
+    }),
+    {
+      name: 'dream-market-storage',
+      storage: createJSONStorage(() => localStorage),
     }
+  )
+);
 
-    set((state) => ({
-      users: state.users.map(u => u.id === userId ? { ...u, points: newPoints } : u),
-      transactions: [
-        {
-          id: Math.random().toString(36).substr(2, 9),
-          userId,
-          type,
-          amount,
-          benefitAmount: benefit,
-          timestamp: Date.now(),
-          description: desc,
-          items
-        },
-        ...state.transactions
-      ],
-      currentUser: state.currentUser?.id === userId ? { ...state.currentUser, points: newPoints } : state.currentUser
-    }));
-    
-    return true;
-  }
-}));

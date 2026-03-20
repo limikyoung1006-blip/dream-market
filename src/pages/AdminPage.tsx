@@ -4,7 +4,7 @@ import { Users, Coins, Plus, Search, Package, X, Save, Download, FileText, Edit2
 
 export const AdminPage = () => {
   const { users, products, addUser, updateUser, deleteUser, addProduct, updateStock, updatePoints, transactions, currentUser } = useMarketStore();
-  const isSuperAdmin = currentUser?.name === '백동희';
+  const isSuperAdmin = currentUser?.id === 'admin-1';
   const [activeSubTab, setActiveSubTab] = useState<'members' | 'admins' | 'inventory' | 'reports'>('members');
   const [searchTerm, setSearchTerm] = useState('');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -40,13 +40,26 @@ export const AdminPage = () => {
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
-    const fullPhone = `010${newUser.phoneMain}`;
+    const cleanInputPhone = newUser.phoneMain.replace(/[^0-9]/g, '');
+    const fullPhone = cleanInputPhone.startsWith('010') && cleanInputPhone.length >= 10 
+      ? cleanInputPhone 
+      : cleanInputPhone.startsWith('010') ? cleanInputPhone : `010${cleanInputPhone}`;
+    
+    const trimmedUser = {
+      ...newUser,
+      name: newUser.name.trim(),
+      birthdate: newUser.birthdate.trim(),
+      password: newUser.password.trim(),
+      address: newUser.address.trim(),
+      phone: fullPhone
+    };
+
     if (editingUser) {
-      updateUser(editingUser.id, { ...newUser, phone: fullPhone });
+      updateUser(editingUser.id, trimmedUser);
       setEditingUser(null);
     } else {
       const id = `${newUser.role}-${Date.now()}`;
-      addUser({ ...newUser, id, phone: fullPhone, points: 0 });
+      addUser({ ...trimmedUser, id, points: 0 });
     }
     setIsUserModalOpen(false);
     setNewUser({ name: '', birthdate: '', phone: '', phoneMain: '', password: '', role: 'user', grade: '기타', address: '' });
@@ -59,7 +72,7 @@ export const AdminPage = () => {
       name: user.name,
       birthdate: user.birthdate,
       phone: user.phone,
-      phoneMain: user.phone.startsWith('010') ? user.phone.slice(3) : user.phone,
+      phoneMain: user.phone,
       password: user.password,
       address: user.address || '',
       role: user.role,
@@ -127,7 +140,8 @@ export const AdminPage = () => {
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesSearch = u.name.includes(searchTerm) || u.id.includes(searchTerm);
+    const cleanPhone = u.phone.replace(/[^0-9]/g, '');
+    const matchesSearch = u.name.includes(searchTerm) || u.id.includes(searchTerm) || cleanPhone.includes(searchTerm.replace(/[^0-9]/g, ''));
     if (!matchesSearch) return false;
     return u.role === 'user';
   });
@@ -543,9 +557,8 @@ export const AdminPage = () => {
                 <div className="space-y-1">
                   <span className="text-[9px] font-black text-slate-400 uppercase ml-1">Phone (전화번호)</span>
                   <div className="flex gap-2">
-                    <div className="px-5 flex items-center justify-center bg-slate-100 rounded-2xl font-black text-slate-400 text-sm">010</div>
                     <input 
-                      type="text" placeholder=" 나머지 8자리" required maxLength={8} 
+                      type="text" placeholder="010-xxxx-xxxx" required maxLength={15} 
                       className="flex-1 bg-slate-50 p-4 rounded-2xl outline-none font-bold placeholder:text-slate-300 border border-transparent focus:border-slate-200 transition-all text-sm" 
                       value={newUser.phoneMain} 
                       onChange={e => setNewUser({...newUser, phoneMain: e.target.value})} 

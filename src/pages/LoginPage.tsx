@@ -16,13 +16,19 @@ export const LoginPage = () => {
     e.preventDefault();
     setError('');
 
-    const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
-    const user = users.find(u => 
-      u.role === loginType &&
-      u.birthdate === formData.birthdate && 
-      u.phone === cleanPhone && 
-      u.password === formData.password
-    );
+    const trimmedBirthdate = formData.birthdate.trim();
+    const trimmedPassword = formData.password.trim();
+    const cleanInputPhone = formData.phone.replace(/[^0-9]/g, '');
+
+    const user = users.find(u => {
+      const cleanStoredPhone = u.phone.replace(/[^0-9]/g, '');
+      return (
+        u.role === loginType &&
+        (u.birthdate === trimmedBirthdate || u.name === trimmedBirthdate) && 
+        cleanStoredPhone === cleanInputPhone && 
+        u.password === trimmedPassword
+      );
+    });
 
     if (user) {
       setCurrentUser(user);
@@ -77,11 +83,11 @@ export const LoginPage = () => {
 
             {/* Birthdate */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-tighter">Birthdate (생년월일)</label>
+              <label className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-tighter">Name or Birthdate (성함 또는 생년월일)</label>
               <div className="relative group">
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary-400 transition-colors" size={18} />
                 <input
-                  type="text" placeholder="생년월일 6자리 (예: 800101)" maxLength={6}
+                  type="text" placeholder="예: 백동희 또는 800101"
                   className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all font-bold"
                   value={formData.birthdate}
                   onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
@@ -95,7 +101,7 @@ export const LoginPage = () => {
               <div className="relative group">
                 <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary-400 transition-colors" size={18} />
                 <input
-                  type="text" placeholder="010-xxxx-xxxx (전체)" maxLength={11}
+                  type="text" placeholder="010-xxxx-xxxx (전체)" maxLength={15}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all font-bold"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -134,7 +140,7 @@ export const LoginPage = () => {
         {loginType === 'admin' && (
           <div className="mt-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center">
             <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Default Admin Account</p>
-            <p className="text-xs text-amber-200/60 font-medium">800101 / 01011112222 / admin</p>
+            <p className="text-xs text-amber-200/60 font-medium">백동희 또는 800101 / 01011112222 / admin</p>
           </div>
         )}
       </div>
