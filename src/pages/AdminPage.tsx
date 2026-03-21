@@ -15,7 +15,7 @@ export const AdminPage = () => {
   const [isChargeModalOpen, setIsChargeModalOpen] = useState(false);
   const [chargeAmount, setChargeAmount] = useState(0);
   const [chargeDescription, setChargeDescription] = useState('관리자 충전');
-  const [chargingTarget, setChargingTarget] = useState<'individual' | 'selected'>('individual');
+  const [chargingTarget, setChargingTarget] = useState<'individual' | 'selected' | 'all'>('individual');
   const [individualTargetId, setIndividualTargetId] = useState<string | null>(null);
 
   // New User State
@@ -155,15 +155,11 @@ export const AdminPage = () => {
     p.name.includes(searchTerm)
   );
 
-  const handleBulkCharge = async () => {
-    if (confirm('모든 일반 회원에게 월간 포인트를 지급하시겠습니까?')) {
-      const targets = users.filter(u => u.role === 'user');
-      for (const u of targets) {
-        const amount = u.grade === '미혼모' ? 100000 : u.grade === '차상위' ? 50000 : 30000;
-        await updatePoints(u.id, amount, 'charge', '월간 정기 정산');
-      }
-      alert('일괄 충전이 완료되었습니다.');
-    }
+  const handleBulkCharge = () => {
+    setChargingTarget('all');
+    setChargeAmount(0);
+    setChargeDescription('월간 정기 정산');
+    setIsChargeModalOpen(true);
   };
 
   const handleSelectedCharge = async (e: React.FormEvent) => {
@@ -175,6 +171,11 @@ export const AdminPage = () => {
         await updatePoints(id, chargeAmount, 'charge', chargeDescription);
       }
       setSelectedUsers([]);
+    } else if (chargingTarget === 'all') {
+      const targets = users.filter(u => u.role === 'user');
+      for (const u of targets) {
+        await updatePoints(u.id, chargeAmount, 'charge', chargeDescription);
+      }
     }
     setIsChargeModalOpen(false);
     setChargeAmount(0);
@@ -475,10 +476,12 @@ export const AdminPage = () => {
             <button onClick={() => setIsChargeModalOpen(false)} className="absolute right-8 top-8 text-slate-300 hover:text-slate-900 transition-colors"><X /></button>
             <div>
               <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter">
-                {chargingTarget === 'individual' ? 'Individual Charge' : `${selectedUsers.length} Users Charge`}
+                {chargingTarget === 'individual' ? 'Individual Charge' : 
+                 chargingTarget === 'selected' ? `${selectedUsers.length} Users Charge` : 'Bulk All Charge'}
               </h4>
-              <p className="text-[10px] font-black mt-1 uppercase tracking-widest text-primary-600">
-                {chargingTarget === 'individual' ? `충전 대상: ${users.find(u => u.id === individualTargetId)?.name}` : '선택한 이용자 전체 충전'}
+                <p className="text-[10px] font-black mt-1 uppercase tracking-widest text-primary-600">
+                {chargingTarget === 'individual' ? `충전 대상: ${users.find(u => u.id === individualTargetId)?.name}` : 
+                 chargingTarget === 'selected' ? `선택한 ${selectedUsers.length}명 이용자` : '전체 이용자 일괄 충전'}
               </p>
             </div>
             

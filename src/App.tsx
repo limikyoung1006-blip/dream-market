@@ -89,15 +89,17 @@ function App() {
             <span className="text-[10px] font-bold">이용자</span>
           </button>
           
-          <button 
-            onClick={() => setActiveTab('store')}
-            className={`group flex flex-col items-center gap-1.5 transition-all ${activeTab === 'store' ? 'text-primary-600' : 'text-slate-400'}`}
-          >
-            <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'store' ? 'bg-primary-50' : 'group-hover:bg-slate-50'}`}>
-              <Smartphone size={activeTab === 'store' ? 24 : 22} />
-            </div>
-            <span className="text-[10px] font-bold">매장</span>
-          </button>
+          {isAdmin && (
+            <button 
+              onClick={() => setActiveTab('store')}
+              className={`group flex flex-col items-center gap-1.5 transition-all ${activeTab === 'store' ? 'text-primary-600' : 'text-slate-400'}`}
+            >
+              <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'store' ? 'bg-primary-50' : 'group-hover:bg-slate-50'}`}>
+                <Smartphone size={activeTab === 'store' ? 24 : 22} />
+              </div>
+              <span className="text-[10px] font-bold">매장</span>
+            </button>
+          )}
 
           {isAdmin && (
             <button 

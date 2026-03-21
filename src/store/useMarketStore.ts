@@ -233,11 +233,22 @@ export const useMarketStore = create<MarketStore>()(
       },
       
       updatePoints: async (userId, amount, type, desc, items, benefit = 0) => {
-        const user = get().users.find(u => u.id === userId);
-        if (!user) return false;
-        if (type === 'use' && user.points < amount) return false;
+        // Fetch latest user data from DB to avoid stale data issues
+        const { data: latestUser, error: fetchError } = await supabase
+          .from('dream_users')
+          .select('points')
+          .eq('id', userId)
+          .single();
+
+        if (fetchError || !latestUser) {
+          console.error('Error fetching latest user points:', fetchError);
+          return false;
+        }
+
+        const currentPoints = latestUser.points || 0;
+        if (type === 'use' && currentPoints < amount) return false;
         
-        const newPoints = type === 'use' ? user.points - amount : user.points + amount;
+        const newPoints = type === 'use' ? currentPoints - amount : currentPoints + amount;
         
         // 1. Update User Points
         const { error: userError } = await supabase.from('dream_users').update({ points: newPoints }).eq('id', userId);
@@ -286,6 +297,9 @@ export const useMarketStore = create<MarketStore>()(
           transactions: [transaction, ...state.transactions],
           currentUser: state.currentUser?.id === userId ? { ...state.currentUser, points: newPoints } : state.currentUser
         }));
+        
+        // Final sync
+        await get().fetchInitialData();
         
         return true;
       }
