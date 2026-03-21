@@ -9,12 +9,8 @@ export const UserPage = () => {
 
   const userTransactions = transactions.filter(t => t.userId === currentUser.id);
 
-  // 등급별 카드 색상 테마
-  const cardTheme = {
-    A: 'mesh-gradient-gold text-amber-950 shadow-amber-200/50',
-    B: 'mesh-gradient-blue text-white shadow-blue-200/50',
-    C: 'mesh-gradient-zinc text-white shadow-slate-200/50',
-  }[currentUser.grade] || 'mesh-gradient-blue text-white shadow-blue-200/50';
+  // 프리미엄 골드 테마 적용 (모든 사용자 동일하게 고급화)
+  const cardTheme = 'mesh-gradient-gold text-amber-950 shadow-amber-200/50';
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
