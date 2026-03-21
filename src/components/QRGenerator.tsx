@@ -15,14 +15,6 @@ export const QRGenerator = ({ value, size = 200, label }: QRGeneratorProps) => {
           size={size}
           level="H"
           includeMargin={false}
-          imageSettings={{
-            src: "/vite.svg",
-            x: undefined,
-            y: undefined,
-            height: 24,
-            width: 24,
-            excavate: true,
-          }}
         />
       </div>
       {label && <p className="mt-4 text-sm font-medium text-slate-500">{label}</p>}

@@ -78,10 +78,10 @@ export const UserPage = () => {
 
       {/* QR Section - Hidden for Admin */}
       {currentUser.role !== 'admin' && (
-        <div className="premium-card p-10 text-center relative border-none shadow-xl bg-white">
+        <div className="premium-card p-8 flex flex-col items-center justify-center relative border-none shadow-xl bg-white overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary-500/20 to-transparent" />
-          <h3 className="font-black text-slate-800 mb-6 tracking-tight">PAYMENT AUTHENTICATION</h3>
-          <div className="inline-block p-4 bg-white rounded-[2rem] shadow-inner border border-slate-50">
+          <h3 className="font-black text-slate-800 mb-6 tracking-tight text-center">PAYMENT AUTHENTICATION</h3>
+          <div className="w-full max-w-[280px] bg-white rounded-[2rem] shadow-inner border border-slate-50 flex flex-col items-center justify-center p-4">
             <QRGenerator 
               value={currentUser.id} 
               label="매장 직원에게 스캔을 요청하세요" 
