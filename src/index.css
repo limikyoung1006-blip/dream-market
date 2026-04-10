@@ -124,3 +124,13 @@ body {
   border-radius: 2rem !important;
   overflow: hidden;
 }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

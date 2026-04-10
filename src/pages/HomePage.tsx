@@ -1,6 +1,7 @@
 import React from 'react'
 import { Heart, Sparkles, BookOpen, Users, Church } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { CardNews } from '../components/CardNews'
 
 export const HomePage = () => {
   const container = {
@@ -55,6 +56,11 @@ export const HomePage = () => {
             작은 나눔이 모여 커다란 사랑을 만드는 공간, 예수인교회가 정성으로 운영합니다.
           </p>
         </div>
+      </motion.section>
+
+      {/* Card News Section */}
+      <motion.section variants={item}>
+        <CardNews />
       </motion.section>
 
       {/* Intro Cards */}

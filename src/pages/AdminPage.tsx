@@ -17,6 +17,7 @@ export const AdminPage = () => {
   const [chargeDescription, setChargeDescription] = useState('관리자 충전');
   const [chargingTarget, setChargingTarget] = useState<'individual' | 'selected' | 'all'>('individual');
   const [individualTargetId, setIndividualTargetId] = useState<string | null>(null);
+  const [pointActionType, setPointActionType] = useState<'charge' | 'use'>('charge');
 
   // New User State
   const [newUser, setNewUser] = useState({
@@ -159,22 +160,24 @@ export const AdminPage = () => {
     setChargingTarget('all');
     setChargeAmount(0);
     setChargeDescription('월간 정기 정산');
+    setPointActionType('charge');
     setIsChargeModalOpen(true);
   };
 
   const handleSelectedCharge = async (e: React.FormEvent) => {
     e.preventDefault();
     if (chargingTarget === 'individual' && individualTargetId) {
-      await updatePoints(individualTargetId, chargeAmount, 'charge', chargeDescription);
+      const success = await updatePoints(individualTargetId, chargeAmount, pointActionType, chargeDescription);
+      if (!success && pointActionType === 'use') alert('포인트가 부족합니다.');
     } else if (chargingTarget === 'selected') {
       for (const id of selectedUsers) {
-        await updatePoints(id, chargeAmount, 'charge', chargeDescription);
+        await updatePoints(id, chargeAmount, pointActionType, chargeDescription);
       }
       setSelectedUsers([]);
     } else if (chargingTarget === 'all') {
       const targets = users.filter(u => u.role === 'user');
       for (const u of targets) {
-        await updatePoints(u.id, chargeAmount, 'charge', chargeDescription);
+        await updatePoints(u.id, chargeAmount, pointActionType, chargeDescription);
       }
     }
     setIsChargeModalOpen(false);
@@ -234,7 +237,13 @@ export const AdminPage = () => {
             </button>
             {selectedUsers.length > 0 && (
               <button 
-                onClick={() => { setChargingTarget('selected'); setIsChargeModalOpen(true); }}
+                onClick={() => { 
+                  setChargingTarget('selected'); 
+                  setPointActionType('charge');
+                  setChargeAmount(0);
+                  setChargeDescription(`${selectedUsers.length}명 선택 추가`);
+                  setIsChargeModalOpen(true); 
+                }}
                 className="flex-1 bg-primary-600 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-2 shadow-xl shadow-primary-900/20 active:scale-95 transition-all animate-in zoom-in-95"
               >
                 <Plus size={24} />
@@ -281,10 +290,32 @@ export const AdminPage = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <button 
-                          onClick={(e) => { e.stopPropagation(); setIndividualTargetId(user.id); setChargingTarget('individual'); setIsChargeModalOpen(true); }}
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIndividualTargetId(user.id); 
+                            setChargingTarget('individual'); 
+                            setPointActionType('charge');
+                            setChargeAmount(0);
+                            setChargeDescription('관리자 추가');
+                            setIsChargeModalOpen(true); 
+                          }}
                           className="p-3 text-slate-300 hover:text-primary-600 hover:bg-primary-50 rounded-2xl transition-all"
                         >
                           <Plus size={22} className="stroke-[2.5]" />
+                        </button>
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIndividualTargetId(user.id); 
+                            setChargingTarget('individual'); 
+                            setPointActionType('use');
+                            setChargeAmount(0);
+                            setChargeDescription('관리자 차감');
+                            setIsChargeModalOpen(true); 
+                          }}
+                          className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                        >
+                          <Minus size={22} className="stroke-[2.5]" />
                         </button>
                         <button onClick={(e) => openEditModal(user, e)} className="p-3 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-all">
                           <Edit2 size={20} />
@@ -476,12 +507,11 @@ export const AdminPage = () => {
             <button onClick={() => setIsChargeModalOpen(false)} className="absolute right-8 top-8 text-slate-300 hover:text-slate-900 transition-colors"><X /></button>
             <div>
               <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter">
-                {chargingTarget === 'individual' ? 'Individual Charge' : 
-                 chargingTarget === 'selected' ? `${selectedUsers.length} Users Charge` : 'Bulk All Charge'}
+                {pointActionType === 'charge' ? 'Point Addition' : 'Point Deduction'}
               </h4>
-                <p className="text-[10px] font-black mt-1 uppercase tracking-widest text-primary-600">
-                {chargingTarget === 'individual' ? `충전 대상: ${users.find(u => u.id === individualTargetId)?.name}` : 
-                 chargingTarget === 'selected' ? `선택한 ${selectedUsers.length}명 이용자` : '전체 이용자 일괄 충전'}
+                <p className={`text-[10px] font-black mt-1 uppercase tracking-widest ${pointActionType === 'charge' ? 'text-primary-600' : 'text-red-600'}`}>
+                {chargingTarget === 'individual' ? `대상: ${users.find(u => u.id === individualTargetId)?.name}` : 
+                 chargingTarget === 'selected' ? `선택한 ${selectedUsers.length}명 이용자` : '전체 이용자 대상'}
               </p>
             </div>
             
@@ -516,8 +546,8 @@ export const AdminPage = () => {
                 ))}
               </div>
 
-              <button type="submit" className="w-full bg-slate-900 text-white py-5 rounded-[1.5rem] font-black flex items-center justify-center gap-2 hover:bg-black transition-all shadow-xl shadow-slate-900/20 mt-4 active:scale-95">
-                <Coins size={20} /> 포인트 충전하기
+              <button type="submit" className={`w-full py-5 rounded-[1.5rem] font-black flex items-center justify-center gap-2 transition-all shadow-xl mt-4 active:scale-95 ${pointActionType === 'charge' ? 'bg-slate-900 hover:bg-black text-white shadow-slate-900/20' : 'bg-red-600 hover:bg-red-700 text-white shadow-red-900/20'}`}>
+                <Coins size={20} /> 포인트 {pointActionType === 'charge' ? '추가하기' : '삭제하기'}
               </button>
             </form>
           </div>
