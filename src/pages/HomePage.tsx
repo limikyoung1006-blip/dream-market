@@ -1,7 +1,6 @@
 import React from 'react'
 import { Heart, Sparkles, BookOpen, Users, Church } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { CardNews } from '../components/CardNews'
 
 export const HomePage = () => {
   const container = {
@@ -58,10 +57,6 @@ export const HomePage = () => {
         </div>
       </motion.section>
 
-      {/* Card News Section */}
-      <motion.section variants={item}>
-        <CardNews />
-      </motion.section>
 
       {/* Intro Cards */}
       <div className="grid gap-6">
