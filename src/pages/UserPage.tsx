@@ -25,7 +25,7 @@ export const UserPage = () => {
                 <p className="text-[8px] font-black opacity-60 tracking-[0.2em] uppercase">Elite Membership</p>
               </div>
               <div className={`px-3 py-1 rounded-full text-[9px] font-black backdrop-blur-md border ${currentUser.grade === 'A' ? 'bg-white/40 border-amber-900/10' : 'bg-white/20 border-white/20'}`}>
-                RANK {currentUser.grade}
+                RANK MEMBER
               </div>
             </div>
             

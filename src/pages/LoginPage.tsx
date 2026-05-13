@@ -61,7 +61,7 @@ export const LoginPage = () => {
             className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-black text-sm transition-all ${loginType === 'user' ? 'bg-white text-slate-950 shadow-xl' : 'text-slate-500 hover:text-slate-300'}`}
           >
             <UserIcon size={16} />
-            교우님 (회원)
+            회원
           </button>
           <button 
             onClick={() => { setLoginType('admin'); setError(''); }}

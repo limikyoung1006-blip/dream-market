@@ -24,9 +24,9 @@ const cards = [
     titleLeft: '드림마켓과 함께하는',
     titleMain: '이용자 신청 안내',
     subtitle: 'Apply Now',
-    description: '미혼모 및 기초생활수급자분들을 위한 특별한 지원 프로그램입니다. 지금 바로 따뜻한 내일을 신청하세요.',
+    description: '지원 대상자분들을 위한 특별한 지원 프로그램입니다. 지금 바로 따뜻한 내일을 신청하세요.',
     points: '매월 5만원 상당 포인트',
-    detail: '미혼모, 기초생활수급자 대상',
+    detail: '지원 대상자 한정',
     bgGradient: 'from-blue-600/90 to-indigo-800/90',
     image: 'https://images.unsplash.com/photo-1574607383476-f517f220d35a?auto=format&fit=crop&q=80&w=1080', // Replace with dream_news_bg_2
     icon: <Users className="text-blue-400" size={24} />
