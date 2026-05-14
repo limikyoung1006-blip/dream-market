@@ -533,6 +533,61 @@ export const AdminPage = () => {
               </button>
             </div>
 
+            {/* Detailed Transaction List for Admin */}
+            <div className="premium-card p-0 bg-white border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                  <History size={16} className="text-primary-600" />
+                  전체 거래 내역 리스트
+                </h4>
+                <span className="text-[10px] font-bold text-slate-400">최근 순 정렬</span>
+              </div>
+              <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+                {transactions.length === 0 ? (
+                  <div className="p-20 text-center text-slate-300 font-bold italic">No transactions found</div>
+                ) : (
+                  <div className="divide-y divide-slate-50">
+                    {transactions.map(t => {
+                      const user = users.find(u => u.id === t.userId);
+                      return (
+                        <div key={t.id} className="p-4 hover:bg-slate-50 transition-all flex items-center justify-between group/tx">
+                          <div className="flex items-center gap-4 min-w-0 flex-1">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${t.type === 'use' ? 'bg-red-50 text-red-500' : 'bg-primary-50 text-primary-600'}`}>
+                              {t.type === 'use' ? <Minus size={18} /> : <Plus size={18} />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="font-black text-slate-900 text-sm">{user?.name || 'Unknown'}</span>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">#{t.id.slice(0, 6)}</span>
+                              </div>
+                              <p className="text-xs font-bold text-slate-500 truncate">{t.description}</p>
+                              <p className="text-[9px] text-slate-400 mt-1">{new Date(t.timestamp).toLocaleString()}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 ml-4">
+                            <p className={`text-sm font-black whitespace-nowrap ${t.type === 'use' ? 'text-slate-900' : 'text-primary-600'}`}>
+                              {t.type === 'use' ? '-' : '+'}{t.amount.toLocaleString()}원
+                            </p>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm('정말로 이 거래 내역을 삭제하시겠습니까?')) {
+                                  deleteTransaction(t.id);
+                                }
+                              }}
+                              className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover/tx:opacity-100"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="premium-card p-6 bg-white border border-slate-100 shadow-sm flex items-center justify-between group min-h-[100px]">
               <div className="flex items-center gap-6 min-w-0 flex-1">
                 <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-900/10 text-white shrink-0">
