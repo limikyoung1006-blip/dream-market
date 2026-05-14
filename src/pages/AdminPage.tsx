@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useMarketStore } from '../store/useMarketStore';
-import { Users, Coins, Plus, Search, Package, X, Save, Download, FileText, Edit2, Minus, Trash2, ShieldCheck } from 'lucide-react';
+import { Users, Coins, Plus, Search, Package, X, Save, Download, FileText, Edit2, Minus, Trash2, ShieldCheck, History } from 'lucide-react';
 
 export const AdminPage = () => {
-  const { users, products, addUser, updateUser, deleteUser, addProduct, updateProduct, updateStock, updatePoints, transactions, currentUser } = useMarketStore();
+  const { users, products, addUser, updateUser, deleteUser, addProduct, updateProduct, updateStock, updatePoints, transactions, currentUser, deleteTransaction } = useMarketStore();
   const isSuperAdmin = currentUser?.id === 'admin-1';
   const [activeSubTab, setActiveSubTab] = useState<'members' | 'admins' | 'inventory' | 'reports'>('members');
   const [searchTerm, setSearchTerm] = useState('');
@@ -277,68 +277,116 @@ export const AdminPage = () => {
                         onChange={() => toggleUserSelection(user.id)}
                         className="w-5 h-5 rounded-lg border-2 border-slate-200 text-primary-600 focus:ring-primary-500 transition-all cursor-pointer"
                       />
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <p className="font-black text-slate-900 text-lg tracking-tight leading-none">{user.name}</p>
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-slate-100 text-slate-500">{user.grade}</span>
-                          <p className="text-base text-primary-600 font-black tracking-tight leading-none ml-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                          <p className="font-black text-slate-900 text-lg tracking-tight leading-none truncate">{user.name}</p>
+                          <p className="text-base text-primary-600 font-black tracking-tight leading-none whitespace-nowrap">
                             <span className="text-[10px] text-slate-400 mr-1 italic">Balance:</span>
                             {user.points.toLocaleString()}원
                           </p>
                         </div>
                       </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIndividualTargetId(user.id); 
-                            setChargingTarget('individual'); 
-                            setPointActionType('charge');
-                            setChargeAmount(0);
-                            setChargeDescription('관리자 추가');
-                            setIsChargeModalOpen(true); 
-                          }}
-                          className="p-3 text-slate-300 hover:text-primary-600 hover:bg-primary-50 rounded-2xl transition-all"
-                        >
-                          <Plus size={22} className="stroke-[2.5]" />
-                        </button>
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setIndividualTargetId(user.id); 
-                            setChargingTarget('individual'); 
-                            setPointActionType('use');
-                            setChargeAmount(0);
-                            setChargeDescription('관리자 차감');
-                            setIsChargeModalOpen(true); 
-                          }}
-                          className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
-                        >
-                          <Minus size={22} className="stroke-[2.5]" />
-                        </button>
-                        <button onClick={(e) => openEditModal(user, e)} className="p-3 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-all">
-                          <Edit2 size={20} />
-                        </button>
-                        <button onClick={(e) => handleDeleteUser(user.id, e)} className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all">
-                          <Trash2 size={20} />
-                        </button>
-                      </div>
                     </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setIndividualTargetId(user.id); 
+                          setChargingTarget('individual'); 
+                          setPointActionType('charge');
+                          setChargeAmount(0);
+                          setChargeDescription('관리자 추가');
+                          setIsChargeModalOpen(true); 
+                        }}
+                        className="p-2 text-slate-300 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all"
+                      >
+                        <Plus size={20} className="stroke-[2.5]" />
+                      </button>
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setIndividualTargetId(user.id); 
+                          setChargingTarget('individual'); 
+                          setPointActionType('use');
+                          setChargeAmount(0);
+                          setChargeDescription('관리자 차감');
+                          setIsChargeModalOpen(true); 
+                        }}
+                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <Minus size={20} className="stroke-[2.5]" />
+                      </button>
+                      <button onClick={(e) => openEditModal(user, e)} className="p-2 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all">
+                        <Edit2 size={18} />
+                      </button>
+                      <button onClick={(e) => handleDeleteUser(user.id, e)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
 
                   {expandedUserId === user.id && (
-                    <div className="mt-5 pt-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
-                      <div className="space-y-1">
-                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Phone (전화번호)</p>
-                        <p className="text-sm font-bold text-slate-700">{user.phone}</p>
+                    <div className="mt-5 pt-5 border-t border-slate-100 space-y-6 animate-in slide-in-from-top-2 duration-300">
+                      {/* User Info Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Phone (전화번호)</p>
+                          <p className="text-sm font-bold text-slate-700">{user.phone}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Birthdate (생년월일)</p>
+                          <p className="text-sm font-bold text-slate-700">{user.birthdate}</p>
+                        </div>
+                        <div className="sm:col-span-2 space-y-1">
+                          <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Address (주소)</p>
+                          <p className="text-sm font-bold text-slate-700">{user.address || '주소 정보가 없습니다'}</p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Birthdate (생년월일)</p>
-                        <p className="text-sm font-bold text-slate-700">{user.birthdate}</p>
-                      </div>
-                      <div className="sm:col-span-2 space-y-1">
-                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Address (주소)</p>
-                        <p className="text-sm font-bold text-slate-700">{user.address || '주소 정보가 없습니다'}</p>
+
+                      {/* Transaction History Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 px-1">
+                          <History size={14} className="text-primary-600" />
+                          <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Transaction History (이용 내역)</h4>
+                        </div>
+                        
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                          {transactions.filter(t => t.userId === user.id).length === 0 ? (
+                            <p className="text-center py-4 text-[10px] font-bold text-slate-300 italic bg-slate-50 rounded-xl">거래 내역이 없습니다</p>
+                          ) : (
+                            transactions.filter(t => t.userId === user.id).map(t => (
+                              <div key={t.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl group/item">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${t.type === 'use' ? 'bg-red-100 text-red-600' : 'bg-primary-100 text-primary-600'}`}>
+                                    {t.type === 'use' ? <Minus size={14} /> : <Plus size={14} />}
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-black text-slate-800 leading-none mb-1">{t.description}</p>
+                                    <p className="text-[8px] font-bold text-slate-400 leading-none">
+                                      {new Date(t.timestamp).toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <p className={`text-xs font-black ${t.type === 'use' ? 'text-slate-900' : 'text-primary-600'}`}>
+                                    {t.type === 'use' ? '-' : '+'}{t.amount.toLocaleString()}원
+                                  </p>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (confirm('정말로 이 거래 내역을 삭제하시겠습니까? (포인트는 자동으로 복구되지 않습니다)')) {
+                                        deleteTransaction(t.id);
+                                      }
+                                    }}
+                                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-100 rounded-lg transition-all opacity-0 group-hover/item:opacity-100"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -376,22 +424,26 @@ export const AdminPage = () => {
                 className="premium-card p-5 flex items-center justify-between bg-white border border-slate-100 hover:border-amber-500 transition-all group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-3">
-                    <p className="font-black text-slate-900 text-lg tracking-tight leading-none">{admin.name}</p>
-                    {admin.name === '백동희' 
-                      ? <span className="bg-primary-600 text-white text-[9px] px-2 py-0.5 rounded-md font-black italic shadow-sm">SUPER</span>
-                      : <span className="bg-amber-500 text-white text-[9px] px-2 py-0.5 rounded-md font-black italic shadow-sm">ADMIN</span>
-                    }
-                    <p className="text-xs text-slate-400 font-bold tracking-tight ml-2">{admin.phone}</p>
+                  <div className="flex-1 min-w-0 pr-4">
+                    <div className="flex items-center gap-3">
+                      <p className="font-black text-slate-900 text-lg tracking-tight leading-none truncate">{admin.name}</p>
+                      <div className="shrink-0 flex gap-1">
+                        {admin.name === '백동희' 
+                          ? <span className="bg-primary-600 text-white text-[9px] px-2 py-0.5 rounded-md font-black italic shadow-sm">SUPER</span>
+                          : <span className="bg-amber-500 text-white text-[9px] px-2 py-0.5 rounded-md font-black italic shadow-sm">ADMIN</span>
+                        }
+                      </div>
+                      <p className="text-xs text-slate-400 font-bold tracking-tight ml-2 truncate hidden sm:block">{admin.phone}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={(e) => openEditModal(admin, e)} className="p-3 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-all">
-                    <Edit2 size={20} />
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <button onClick={(e) => openEditModal(admin, e)} className="p-2 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all">
+                    <Edit2 size={18} />
                   </button>
                   {admin.name !== '백동희' && (
-                    <button onClick={(e) => handleDeleteUser(admin.id, e)} className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all">
-                      <Trash2 size={20} />
+                    <button onClick={(e) => handleDeleteUser(admin.id, e)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                      <Trash2 size={18} />
                     </button>
                   )}
                 </div>

@@ -58,6 +58,7 @@ interface MarketStore {
   deleteProduct: (productId: string) => Promise<void>;
   updateStock: (productId: string, quantity: number) => Promise<void>;
   updatePoints: (userId: string, amount: number, type: 'charge' | 'use', desc: string, items?: TransactionItem[], benefit?: number) => Promise<boolean>;
+  deleteTransaction: (transactionId: string) => Promise<void>;
 }
 
 export const useMarketStore = create<MarketStore>()(
@@ -302,6 +303,18 @@ export const useMarketStore = create<MarketStore>()(
         await get().fetchInitialData();
         
         return true;
+      },
+
+      deleteTransaction: async (transactionId) => {
+        const { error } = await supabase.from('dream_transactions').delete().eq('id', transactionId);
+        if (error) {
+          console.error('Supabase deleteTransaction error:', error);
+          alert('거래 내역 삭제 중 오류가 발생했습니다.');
+          return;
+        }
+        set((state) => ({
+          transactions: state.transactions.filter(t => t.id !== transactionId)
+        }));
       }
     }),
     {
