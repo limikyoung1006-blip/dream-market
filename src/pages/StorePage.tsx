@@ -54,6 +54,7 @@ export const StorePage = () => {
     try {
       const user = users.find(u => u.id === userId);
       if (!user) {
+        alert('등록되지 않은 회원입니다.');
         setResult({ success: false, message: '등록되지 않은 회원입니다.' });
         setStep('result');
         return;
@@ -70,6 +71,7 @@ export const StorePage = () => {
             undefined,
             0
           );
+          alert(`재고가 부족합니다: ${item.name} (현재 재고: ${p?.stock || 0}개)`);
           setResult({ success: false, message: `재고가 부족합니다: ${item.name} (현재 재고: ${p?.stock || 0}개)` });
           setStep('result');
           return;
@@ -85,6 +87,7 @@ export const StorePage = () => {
           undefined,
           0
         );
+        alert(`잔액이 부족합니다. (현재: ${user.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)`);
         setResult({ success: false, message: `잔액이 부족합니다. (현재: ${user.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)` });
         setStep('result');
         return;
@@ -118,6 +121,7 @@ export const StorePage = () => {
           ? `${basket[0].name} ${basket[0].quantity}개가`
           : `${basket[0].name} ${basket[0].quantity}개 외 ${basket.length - 1}건이`;
 
+        alert(`${itemsSummary} 구매되었습니다.`);
         setResult({ 
           success: true, 
           message: `${itemsSummary} 구매되었습니다.`,
@@ -127,11 +131,13 @@ export const StorePage = () => {
           remainingPoints: user.points - totalAmount
         });
       } else {
+        alert('결제 중 오류가 발생했습니다.');
         setResult({ success: false, message: '결제 중 오류가 발생했습니다.' });
       }
       setStep('result');
     } catch (error) {
       console.error(error);
+      alert('결제 처리 중 시스템 오류가 발생했습니다.');
       setResult({ success: false, message: '결제 처리 중 시스템 오류가 발생했습니다.' });
       setStep('result');
     } finally {
