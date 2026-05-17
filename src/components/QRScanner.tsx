@@ -31,10 +31,6 @@ export const QRScanner = ({ onScanSuccess, onScanFailure }: QRScannerProps) => {
         (decodedText) => {
           if (!isScanningRef.current) return;
           isScanningRef.current = false;
-          
-          // Stop immediately to prevent multiple API calls
-          html5QrCodeRef.current?.stop().catch(err => console.error("Error stopping scanner:", err));
-          
           onScanSuccess(decodedText);
         },
         (errorMessage) => {
