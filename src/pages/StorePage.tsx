@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useMarketStore } from '../store/useMarketStore';
 import { QRScanner } from '../components/QRScanner';
 import { Scan, ArrowLeft, CheckCircle2, AlertCircle, ShoppingBasket, Plus, Minus, Trash2, Package } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Scan, ArrowLeft, CheckCircle2, AlertCircle, ShoppingBasket, Plus, Minus
 export const StorePage = () => {
   const { updatePoints, users, products } = useMarketStore();
   const [step, setStep] = useState<'products' | 'scanning' | 'result'>('products');
+  const isProcessingRef = useRef(false);
   const [basket, setBasket] = useState<{ productId: string; name: string; quantity: number; price: number }[]>([]);
   const [result, setResult] = useState<{ 
     success: boolean; 
@@ -47,84 +48,95 @@ export const StorePage = () => {
   };
 
   const handleScanSuccess = async (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    if (!user) {
-      setResult({ success: false, message: '등록되지 않은 회원입니다.' });
-      setStep('result');
-      return;
-    }
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
 
-    for (const item of basket) {
-      const p = products.find(p => p.id === item.productId);
-      if (!p || p.stock < item.quantity) {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (!user) {
+        setResult({ success: false, message: '등록되지 않은 회원입니다.' });
+        setStep('result');
+        return;
+      }
+
+      for (const item of basket) {
+        const p = products.find(p => p.id === item.productId);
+        if (!p || p.stock < item.quantity) {
+          await updatePoints(
+            userId, 
+            0, 
+            'use', 
+            `[결제 실패 - 재고 부족] ${item.name} (현재 재고: ${p?.stock || 0}개)`,
+            undefined,
+            0
+          );
+          setResult({ success: false, message: `재고가 부족합니다: ${item.name} (현재 재고: ${p?.stock || 0}개)` });
+          setStep('result');
+          return;
+        }
+      }
+
+      if (user.points < totalAmount) {
         await updatePoints(
           userId, 
           0, 
           'use', 
-          `[결제 실패 - 재고 부족] ${item.name} (현재 재고: ${p?.stock || 0}개)`,
+          `[결제 실패 - 잔액 부족] ${basket[0].name}${basket.length > 1 ? ` 외 ${basket.length - 1}건` : ''} (시도금액: ${totalAmount.toLocaleString()}원)`,
           undefined,
           0
         );
-        setResult({ success: false, message: `재고가 부족합니다: ${item.name} (현재 재고: ${p?.stock || 0}개)` });
+        setResult({ success: false, message: `잔액이 부족합니다. (현재: ${user.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)` });
         setStep('result');
         return;
       }
-    }
 
-    if (user.points < totalAmount) {
-      await updatePoints(
+      const transactionItems = basket.map(item => ({
+        productId: item.productId,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      }));
+
+      const totalBenefit = basket.reduce((sum, item) => {
+        const product = products.find(p => p.id === item.productId);
+        const marketPrice = product?.marketPrice || item.price;
+        const benefit = Math.max(0, marketPrice - item.price);
+        return sum + (benefit * item.quantity);
+      }, 0);
+
+      const success = await updatePoints(
         userId, 
-        0, 
+        totalAmount, 
         'use', 
-        `[결제 실패 - 잔액 부족] ${basket[0].name}${basket.length > 1 ? ` 외 ${basket.length - 1}건` : ''} (시도금액: ${totalAmount.toLocaleString()}원)`,
-        undefined,
-        0
+        `${basket[0].name}${basket.length > 1 ? ` 외 ${basket.length - 1}건` : ''}`,
+        transactionItems,
+        totalBenefit
       );
-      setResult({ success: false, message: `잔액이 부족합니다. (현재: ${user.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)` });
+      
+      if (success) {
+        const itemsSummary = basket.length === 1
+          ? `${basket[0].name} ${basket[0].quantity}개가`
+          : `${basket[0].name} ${basket[0].quantity}개 외 ${basket.length - 1}건이`;
+
+        setResult({ 
+          success: true, 
+          message: `${itemsSummary} 구매되었습니다.`,
+          buyerName: user.name,
+          purchasedItems: basket,
+          total: totalAmount,
+          remainingPoints: user.points - totalAmount
+        });
+      } else {
+        setResult({ success: false, message: '결제 중 오류가 발생했습니다.' });
+      }
       setStep('result');
-      return;
+    } catch (error) {
+      console.error(error);
+      setResult({ success: false, message: '결제 처리 중 시스템 오류가 발생했습니다.' });
+      setStep('result');
+    } finally {
+      isProcessingRef.current = false;
     }
-
-    const transactionItems = basket.map(item => ({
-      productId: item.productId,
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price
-    }));
-
-    const totalBenefit = basket.reduce((sum, item) => {
-      const product = products.find(p => p.id === item.productId);
-      const marketPrice = product?.marketPrice || item.price;
-      const benefit = Math.max(0, marketPrice - item.price);
-      return sum + (benefit * item.quantity);
-    }, 0);
-
-    const success = await updatePoints(
-      userId, 
-      totalAmount, 
-      'use', 
-      `${basket[0].name}${basket.length > 1 ? ` 외 ${basket.length - 1}건` : ''}`,
-      transactionItems,
-      totalBenefit
-    );
-    
-    if (success) {
-      const itemsSummary = basket.length === 1
-        ? `${basket[0].name} ${basket[0].quantity}개가`
-        : `${basket[0].name} ${basket[0].quantity}개 외 ${basket.length - 1}건이`;
-
-      setResult({ 
-        success: true, 
-        message: `${itemsSummary} 구매되었습니다.`,
-        buyerName: user.name,
-        purchasedItems: basket,
-        total: totalAmount,
-        remainingPoints: user.points - totalAmount
-      });
-    } else {
-      setResult({ success: false, message: '결제 중 오류가 발생했습니다.' });
-    }
-    setStep('result');
   };
 
   const reset = () => {
@@ -179,7 +191,7 @@ export const StorePage = () => {
 
           {basket.length > 0 && (
             <div className="fixed bottom-24 left-6 right-6 z-40 animate-in slide-in-from-bottom-10">
-              <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl space-y-4 border-2 border-white/20">
+              <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl space-y-4 border-2 border-sky-400/50">
                 <div className="max-h-32 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                   {basket.map(item => (
                     <div key={item.productId} className="flex items-center justify-between text-sm">
