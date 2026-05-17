@@ -1,43 +1,11 @@
 import React from 'react'
 import { Heart, Sparkles, BookOpen, Users, Church } from 'lucide-react'
-import { motion } from 'framer-motion'
 
 export const HomePage = () => {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15
-      }
-    }
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 30 },
-    show: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15
-      }
-    }
-  }
-
   return (
-    <motion.div 
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="space-y-8"
-    >
+    <div className="space-y-8 animate-in fade-in duration-700">
       {/* Hero Section */}
-      <motion.section 
-        variants={item}
-        className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary-600 to-indigo-700 p-8 text-white shadow-2xl shadow-primary-200"
-      >
+      <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary-600 to-indigo-700 p-8 text-white shadow-2xl shadow-primary-200 animate-in slide-in-from-bottom-4 duration-500 delay-100">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl" />
         
@@ -55,12 +23,11 @@ export const HomePage = () => {
             작은 나눔이 모여 커다란 사랑을 만드는 공간, 예수인교회가 정성으로 운영합니다.
           </p>
         </div>
-      </motion.section>
-
+      </section>
 
       {/* Intro Cards */}
       <div className="grid gap-6">
-        <motion.div variants={item} className="premium-card p-6 border-l-4 border-l-primary-500">
+        <div className="premium-card p-6 border-l-4 border-l-primary-500 animate-in slide-in-from-bottom-4 duration-500 delay-200">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center flex-shrink-0">
               <Heart className="text-primary-600" size={24} />
@@ -73,9 +40,9 @@ export const HomePage = () => {
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div variants={item} className="premium-card p-6 border-l-4 border-l-indigo-500">
+        <div className="premium-card p-6 border-l-4 border-l-indigo-500 animate-in slide-in-from-bottom-4 duration-500 delay-300">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center flex-shrink-0">
               <Church className="text-indigo-600" size={24} />
@@ -88,9 +55,9 @@ export const HomePage = () => {
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div variants={item} className="premium-card p-6 border-l-4 border-l-purple-500">
+        <div className="premium-card p-6 border-l-4 border-l-purple-500 animate-in slide-in-from-bottom-4 duration-500 delay-300">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center flex-shrink-0">
               <BookOpen className="text-purple-600" size={24} />
@@ -103,14 +70,11 @@ export const HomePage = () => {
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Community Info */}
-      <motion.section 
-        variants={item}
-        className="bg-slate-100/50 rounded-[2rem] p-8 text-center space-y-4 border border-slate-200"
-      >
+      <section className="bg-slate-100/50 rounded-[2rem] p-8 text-center space-y-4 border border-slate-200 animate-in slide-in-from-bottom-4 duration-500 delay-500">
         <div className="flex justify-center">
           <div className="w-20 h-20 bg-white rounded-2xl shadow-inner flex items-center justify-center mb-2">
             <img src="/church-logo.png" alt="Jesus Church" className="w-14 h-14 object-contain transition-transform hover:scale-110" />
@@ -130,13 +94,13 @@ export const HomePage = () => {
             <span>나눔 누적 10,000+</span>
           </div>
         </div>
-      </motion.section>
+      </section>
       
-      <motion.div variants={item} className="pb-8 text-center">
+      <div className="pb-8 text-center animate-in fade-in duration-500 delay-500">
         <p className="text-slate-400 text-xs font-medium">
           © 2024 드림마켓 by 예수인교회. All rights reserved.
         </p>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   )
 }
