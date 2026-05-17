@@ -13,7 +13,9 @@ export const QRScanner = ({ onScanSuccess, onScanFailure }: QRScannerProps) => {
   const [isScannerReady, setIsScannerReady] = useState(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
 
-  const startScanner = async (cameraId: string) => {
+  const isScanningRef = useRef(false);
+
+  const startScanner = async (cameraConfig: string | { facingMode: string }) => {
     if (!html5QrCodeRef.current) return;
     
     try {
@@ -21,10 +23,18 @@ export const QRScanner = ({ onScanSuccess, onScanFailure }: QRScannerProps) => {
         await html5QrCodeRef.current.stop();
       }
       
+      isScanningRef.current = true;
+      
       await html5QrCodeRef.current.start(
-        cameraId,
+        cameraConfig,
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText) => {
+          if (!isScanningRef.current) return;
+          isScanningRef.current = false;
+          
+          // Stop immediately to prevent multiple API calls
+          html5QrCodeRef.current?.stop().catch(err => console.error("Error stopping scanner:", err));
+          
           onScanSuccess(decodedText);
         },
         (errorMessage) => {
@@ -44,12 +54,15 @@ export const QRScanner = ({ onScanSuccess, onScanFailure }: QRScannerProps) => {
     Html5Qrcode.getCameras().then(devices => {
       if (devices && devices.length > 0) {
         setCameras(devices.map(d => ({ id: d.id, label: d.label })));
-        const backCamera = devices.find(d => d.label.toLowerCase().includes('back')) || devices[0];
+        const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('후면')) || devices[devices.length - 1];
         setSelectedCameraId(backCamera.id);
-        startScanner(backCamera.id);
+        startScanner({ facingMode: "environment" });
+      } else {
+        startScanner({ facingMode: "environment" });
       }
     }).catch(err => {
       console.error("Error getting cameras", err);
+      startScanner({ facingMode: "environment" });
     });
 
     return () => {

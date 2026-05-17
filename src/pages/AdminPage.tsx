@@ -174,18 +174,19 @@ export const AdminPage = () => {
 
   const handleSelectedCharge = async (e: React.FormEvent) => {
     e.preventDefault();
+    const finalDescription = `[관리자: ${currentUser?.name}] ${chargeDescription}`;
     if (chargingTarget === 'individual' && individualTargetId) {
-      const success = await updatePoints(individualTargetId, chargeAmount, pointActionType, chargeDescription);
+      const success = await updatePoints(individualTargetId, chargeAmount, pointActionType, finalDescription);
       if (!success && pointActionType === 'use') alert('포인트가 부족합니다.');
     } else if (chargingTarget === 'selected') {
       for (const id of selectedUsers) {
-        await updatePoints(id, chargeAmount, pointActionType, chargeDescription);
+        await updatePoints(id, chargeAmount, pointActionType, finalDescription);
       }
       setSelectedUsers([]);
     } else if (chargingTarget === 'all') {
       const targets = users.filter(u => u.role === 'user');
       for (const u of targets) {
-        await updatePoints(u.id, chargeAmount, pointActionType, chargeDescription);
+        await updatePoints(u.id, chargeAmount, pointActionType, finalDescription);
       }
     }
     setIsChargeModalOpen(false);

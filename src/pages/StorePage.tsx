@@ -7,7 +7,14 @@ export const StorePage = () => {
   const { updatePoints, users, products } = useMarketStore();
   const [step, setStep] = useState<'products' | 'scanning' | 'result'>('products');
   const [basket, setBasket] = useState<{ productId: string; name: string; quantity: number; price: number }[]>([]);
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [result, setResult] = useState<{ 
+    success: boolean; 
+    message: string; 
+    buyerName?: string; 
+    purchasedItems?: typeof basket;
+    total?: number;
+    remainingPoints?: number;
+  } | null>(null);
 
   const totalAmount = basket.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   
@@ -15,8 +22,10 @@ export const StorePage = () => {
     setBasket(prev => {
       const existing = prev.find(item => item.productId === p.id);
       if (existing) {
+        if (existing.quantity >= p.stock) return prev;
         return prev.map(item => item.productId === p.id ? { ...item, quantity: item.quantity + 1 } : item);
       }
+      if (p.stock <= 0) return prev;
       return [...prev, { productId: p.id, name: p.name, quantity: 1, price: p.price }];
     });
   };
@@ -24,7 +33,9 @@ export const StorePage = () => {
   const updateQuantity = (id: string, delta: number) => {
     setBasket(prev => prev.map(item => {
       if (item.productId === id) {
-        const newQty = Math.max(1, item.quantity + delta);
+        const product = products.find(p => p.id === id);
+        const maxQty = product ? product.stock : 1;
+        const newQty = Math.min(maxQty, Math.max(1, item.quantity + delta));
         return { ...item, quantity: newQty };
       }
       return item;
@@ -43,8 +54,33 @@ export const StorePage = () => {
       return;
     }
 
+    for (const item of basket) {
+      const p = products.find(p => p.id === item.productId);
+      if (!p || p.stock < item.quantity) {
+        await updatePoints(
+          userId, 
+          0, 
+          'use', 
+          `[결제 실패 - 재고 부족] ${item.name} (현재 재고: ${p?.stock || 0}개)`,
+          undefined,
+          0
+        );
+        setResult({ success: false, message: `재고가 부족합니다: ${item.name} (현재 재고: ${p?.stock || 0}개)` });
+        setStep('result');
+        return;
+      }
+    }
+
     if (user.points < totalAmount) {
-      setResult({ success: false, message: `잔액이 부족합니다. (현재: ${user.points.toLocaleString()} 원)` });
+      await updatePoints(
+        userId, 
+        0, 
+        'use', 
+        `[결제 실패 - 잔액 부족] ${basket[0].name}${basket.length > 1 ? ` 외 ${basket.length - 1}건` : ''} (시도금액: ${totalAmount.toLocaleString()}원)`,
+        undefined,
+        0
+      );
+      setResult({ success: false, message: `잔액이 부족합니다. (현재: ${user.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)` });
       setStep('result');
       return;
     }
@@ -56,17 +92,31 @@ export const StorePage = () => {
       price: item.price
     }));
 
+    const totalBenefit = basket.reduce((sum, item) => {
+      const product = products.find(p => p.id === item.productId);
+      const marketPrice = product?.marketPrice || item.price;
+      const benefit = Math.max(0, marketPrice - item.price);
+      return sum + (benefit * item.quantity);
+    }, 0);
+
     const success = await updatePoints(
       userId, 
       totalAmount, 
       'use', 
       `${basket[0].name}${basket.length > 1 ? ` 외 ${basket.length - 1}건` : ''}`,
       transactionItems,
-      0
+      totalBenefit
     );
     
     if (success) {
-      setResult({ success: true, message: `${totalAmount.toLocaleString()} 원 결제 완료!` });
+      setResult({ 
+        success: true, 
+        message: '결제가 완료되었습니다.',
+        buyerName: user.name,
+        purchasedItems: basket,
+        total: totalAmount,
+        remainingPoints: user.points - totalAmount
+      });
     } else {
       setResult({ success: false, message: '결제 중 오류가 발생했습니다.' });
     }
@@ -179,19 +229,51 @@ export const StorePage = () => {
       )}
 
       {step === 'result' && result && (
-        <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in-95 duration-300">
-          <div className={`w-24 h-24 rounded-[2rem] flex items-center justify-center mb-6 shadow-2xl ${result.success ? 'bg-green-100 text-green-600 shadow-green-100' : 'bg-red-100 text-red-600 shadow-red-100'}`}>
-            {result.success ? <CheckCircle2 size={48} /> : <AlertCircle size={48} />}
+        <div className="flex flex-col items-center justify-center py-10 text-center animate-in zoom-in-95 duration-300">
+          <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center mb-4 shadow-2xl ${result.success ? 'bg-green-100 text-green-600 shadow-green-100' : 'bg-red-100 text-red-600 shadow-red-100'}`}>
+            {result.success ? <CheckCircle2 size={40} /> : <AlertCircle size={40} />}
           </div>
           <h2 className="text-2xl font-bold text-slate-800 mb-2">
             {result.success ? '결제 성공' : '결제 실패'}
           </h2>
-          <p className="text-slate-500 mb-10 px-10">{result.message}</p>
+          <p className="text-slate-500 mb-6">{result.message}</p>
+          
+          {result.success && result.purchasedItems && (
+            <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl border border-slate-100 mb-8 text-left space-y-4">
+              <div className="flex justify-between items-end border-b border-slate-100 pb-4">
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Buyer (이용자)</p>
+                  <p className="text-lg font-bold text-slate-800">{result.buyerName} 님</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3 max-h-40 overflow-y-auto custom-scrollbar pr-2">
+                {result.purchasedItems.map(item => (
+                  <div key={item.productId} className="flex justify-between items-center text-sm">
+                    <span className="font-bold text-slate-700">{item.name} <span className="text-slate-400 text-xs ml-1">x{item.quantity}</span></span>
+                    <span className="font-black text-slate-900">{(item.price * item.quantity).toLocaleString()}원</span>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="border-t border-slate-100 pt-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-500">총 결제 금액</span>
+                  <span className="text-xl font-black text-primary-600">{result.total?.toLocaleString()}원</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-400">결제 후 잔여 포인트</span>
+                  <span className="text-sm font-black text-slate-600">{result.remainingPoints?.toLocaleString()}원</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <button 
             onClick={reset}
-            className="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all shadow-xl"
+            className="w-full max-w-sm bg-slate-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all shadow-xl"
           >
-            확인
+            확인 및 새로운 결제
           </button>
         </div>
       )}
