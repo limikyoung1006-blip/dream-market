@@ -3,7 +3,7 @@ import { useMarketStore } from '../store/useMarketStore';
 import { Users, Coins, Plus, Search, Package, X, Save, Download, FileText, Edit2, Minus, Trash2, ShieldCheck, History } from 'lucide-react';
 
 export const AdminPage = () => {
-  const { users, products, addUser, updateUser, deleteUser, addProduct, updateProduct, updateStock, updatePoints, transactions, currentUser, deleteTransaction } = useMarketStore();
+  const { users, products, addUser, updateUser, deleteUser, addProduct, updateProduct, deleteProduct, updateStock, updatePoints, transactions, currentUser, deleteTransaction } = useMarketStore();
   const isSuperAdmin = currentUser?.id === 'admin-1';
   const [activeSubTab, setActiveSubTab] = useState<'members' | 'admins' | 'inventory' | 'reports'>('members');
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,6 +112,14 @@ export const AdminPage = () => {
     });
     setIsProductModalOpen(true);
   };
+
+  const handleDeleteProduct = async (productId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('정말로 이 상품을 삭제하시겠습니까?')) {
+      await deleteProduct(productId);
+    }
+  };
+
 
   const exportToCSV = (type: 'inventory' | 'accounting') => {
     let headers = "";
@@ -492,6 +500,9 @@ export const AdminPage = () => {
                     <div className="flex items-center gap-1.5 border-l border-slate-100 pl-3">
                       <button onClick={() => openProductEditModal(product)} className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all">
                         <Edit2 size={14} />
+                      </button>
+                      <button onClick={(e) => handleDeleteProduct(product.id, e)} className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                        <Trash2 size={14} />
                       </button>
                       
                       <div className="flex flex-col gap-1">
