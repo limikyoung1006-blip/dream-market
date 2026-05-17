@@ -109,9 +109,13 @@ export const StorePage = () => {
     );
     
     if (success) {
+      const itemsSummary = basket.length === 1
+        ? `${basket[0].name} ${basket[0].quantity}개가`
+        : `${basket[0].name} ${basket[0].quantity}개 외 ${basket.length - 1}건이`;
+
       setResult({ 
         success: true, 
-        message: '결제가 완료되었습니다.',
+        message: `${itemsSummary} 구매되었습니다.`,
         buyerName: user.name,
         purchasedItems: basket,
         total: totalAmount,
@@ -141,7 +145,7 @@ export const StorePage = () => {
           </div>
 
           {/* Product List */}
-          <div className="grid grid-cols-1 gap-4">
+          <div className={`grid grid-cols-1 gap-4 ${basket.length > 0 ? 'pb-52' : 'pb-8'}`}>
             {products.map(p => (
               <button 
                 key={p.id} 
@@ -154,7 +158,7 @@ export const StorePage = () => {
                   <div className="flex-1">
                     <p className="font-black text-white text-lg md:text-xl tracking-tight leading-tight break-all">{p.name}</p>
                     <div className={`inline-flex items-center gap-1 mt-1 text-[8px] md:text-[9px] font-black uppercase tracking-wider ${p.stock < 10 ? 'text-red-400' : 'text-slate-500'}`}>
-                      <Package size={10} /> {p.stock} In Stock
+                      <Package size={10} /> 재고 {p.stock}개
                     </div>
                   </div>
                   
@@ -173,10 +177,9 @@ export const StorePage = () => {
             ))}
           </div>
 
-          {/* Basket Summary */}
           {basket.length > 0 && (
             <div className="fixed bottom-24 left-6 right-6 z-40 animate-in slide-in-from-bottom-10">
-              <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl space-y-4">
+              <div className="bg-slate-900 text-white p-6 rounded-[2rem] shadow-2xl space-y-4 border-2 border-white/20">
                 <div className="max-h-32 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                   {basket.map(item => (
                     <div key={item.productId} className="flex items-center justify-between text-sm">
