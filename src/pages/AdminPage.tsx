@@ -351,6 +351,38 @@ export const AdminPage = () => {
                         </div>
                       </div>
 
+                      {/* Explicit Action Buttons */}
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIndividualTargetId(user.id); 
+                            setChargingTarget('individual'); 
+                            setPointActionType('charge');
+                            setChargeAmount(0);
+                            setChargeDescription('관리자 추가');
+                            setIsChargeModalOpen(true); 
+                          }}
+                          className="flex-1 bg-primary-50 hover:bg-primary-100 text-primary-600 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all"
+                        >
+                          <Plus size={16} className="stroke-[3]" /> 개별 포인트 충전
+                        </button>
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setIndividualTargetId(user.id); 
+                            setChargingTarget('individual'); 
+                            setPointActionType('use');
+                            setChargeAmount(0);
+                            setChargeDescription('관리자 차감');
+                            setIsChargeModalOpen(true); 
+                          }}
+                          className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all"
+                        >
+                          <Minus size={16} className="stroke-[3]" /> 개별 포인트 차감
+                        </button>
+                      </div>
+
                       {/* Transaction History Section */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 px-1">
