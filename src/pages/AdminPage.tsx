@@ -653,7 +653,7 @@ export const AdminPage = () => {
       {/* Charge Modal */}
       {isChargeModalOpen && (
         <div className="fixed inset-0 z-[140] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <button onClick={() => setIsChargeModalOpen(false)} className="absolute right-8 top-8 text-slate-300 hover:text-slate-900 transition-colors"><X /></button>
             <div>
               <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter">
@@ -707,7 +707,7 @@ export const AdminPage = () => {
       {/* User/Admin Modal */}
       {isUserModalOpen && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <button onClick={() => setIsUserModalOpen(false)} className="absolute right-8 top-8 text-slate-300 hover:text-slate-900 transition-colors"><X /></button>
             <div>
               <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter">
@@ -778,7 +778,7 @@ export const AdminPage = () => {
       {/* Product Modal remains the same */}
       {isProductModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-10 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <button onClick={() => setIsProductModalOpen(false)} className="absolute right-8 top-8 text-slate-300 hover:text-slate-900 transition-colors"><X /></button>
             <h4 className="text-2xl font-black text-slate-900 italic tracking-tighter">
               {editingProduct ? 'Product Update' : 'New Product Registration'}
