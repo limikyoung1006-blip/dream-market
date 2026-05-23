@@ -277,7 +277,8 @@ export const useMarketStore = create<MarketStore>()(
           amount: transaction.amount,
           benefit_amount: transaction.benefitAmount,
           description: transaction.description,
-          timestamp: transaction.timestamp
+          timestamp: transaction.timestamp,
+          items: transaction.items
         });
 
         if (txError) {

@@ -396,34 +396,48 @@ export const AdminPage = () => {
                             <p className="text-center py-4 text-[10px] font-bold text-slate-300 italic bg-slate-50 rounded-xl">거래 내역이 없습니다</p>
                           ) : (
                             transactions.filter(t => t.userId === user.id).map(t => (
-                              <div key={t.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl group/item">
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${t.type === 'use' ? 'bg-red-100 text-red-600' : 'bg-primary-100 text-primary-600'}`}>
-                                    {t.type === 'use' ? <Minus size={14} /> : <Plus size={14} />}
+                              <div key={t.id} className="flex flex-col gap-2.5 p-3 bg-slate-50 rounded-xl group/item">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${t.type === 'use' ? 'bg-red-100 text-red-600' : 'bg-primary-100 text-primary-600'}`}>
+                                      {t.type === 'use' ? <Minus size={14} /> : <Plus size={14} />}
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] font-black text-slate-800 leading-none mb-1">{t.description}</p>
+                                      <p className="text-[8px] font-bold text-slate-400 leading-none">
+                                        {new Date(t.timestamp).toLocaleString()}
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="text-[10px] font-black text-slate-800 leading-none mb-1">{t.description}</p>
-                                    <p className="text-[8px] font-bold text-slate-400 leading-none">
-                                      {new Date(t.timestamp).toLocaleString()}
+                                  <div className="flex items-center gap-3">
+                                    <p className={`text-xs font-black ${t.type === 'use' ? 'text-slate-900' : 'text-primary-600'}`}>
+                                      {t.type === 'use' ? '-' : '+'}{t.amount.toLocaleString()}원
                                     </p>
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (confirm('정말로 이 거래 내역을 삭제하시겠습니까? (포인트는 자동으로 복구되지 않습니다)')) {
+                                          deleteTransaction(t.id);
+                                        }
+                                      }}
+                                      className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-100 rounded-lg transition-all opacity-0 group-hover/item:opacity-100"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                  <p className={`text-xs font-black ${t.type === 'use' ? 'text-slate-900' : 'text-primary-600'}`}>
-                                    {t.type === 'use' ? '-' : '+'}{t.amount.toLocaleString()}원
-                                  </p>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (confirm('정말로 이 거래 내역을 삭제하시겠습니까? (포인트는 자동으로 복구되지 않습니다)')) {
-                                        deleteTransaction(t.id);
-                                      }
-                                    }}
-                                    className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-100 rounded-lg transition-all opacity-0 group-hover/item:opacity-100"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
+                                
+                                {/* Items Breakdown (If available) */}
+                                {t.items && t.items.length > 0 && (
+                                  <div className="space-y-1 bg-white/60 p-2.5 rounded-xl border border-slate-100/50 ml-11">
+                                    {t.items.map((item, idx) => (
+                                      <div key={idx} className="flex justify-between text-[10px] font-bold text-slate-500">
+                                        <span>{item.name} x {item.quantity}</span>
+                                        <span>{(item.price * item.quantity).toLocaleString()}원</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             ))
                           )}
@@ -594,36 +608,50 @@ export const AdminPage = () => {
                     {transactions.map(t => {
                       const user = users.find(u => u.id === t.userId);
                       return (
-                        <div key={t.id} className="p-4 hover:bg-slate-50 transition-all flex items-center justify-between group/tx">
-                          <div className="flex items-center gap-4 min-w-0 flex-1">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${t.type === 'use' ? 'bg-red-50 text-red-500' : 'bg-primary-50 text-primary-600'}`}>
-                              {t.type === 'use' ? <Minus size={18} /> : <Plus size={18} />}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span className="font-black text-slate-900 text-sm">{user?.name || 'Unknown'}</span>
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">#{t.id.slice(0, 6)}</span>
+                        <div key={t.id} className="p-4 hover:bg-slate-50 transition-all flex flex-col gap-3 group/tx">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${t.type === 'use' ? 'bg-red-50 text-red-500' : 'bg-primary-50 text-primary-600'}`}>
+                                {t.type === 'use' ? <Minus size={18} /> : <Plus size={18} />}
                               </div>
-                              <p className="text-xs font-bold text-slate-500 truncate">{t.description}</p>
-                              <p className="text-[9px] text-slate-400 mt-1">{new Date(t.timestamp).toLocaleString()}</p>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <span className="font-black text-slate-900 text-sm">{user?.name || 'Unknown'}</span>
+                                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">#{t.id.slice(0, 6)}</span>
+                                </div>
+                                <p className="text-xs font-bold text-slate-500 truncate">{t.description}</p>
+                                <p className="text-[9px] text-slate-400 mt-1">{new Date(t.timestamp).toLocaleString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 ml-4">
+                              <p className={`text-sm font-black whitespace-nowrap ${t.type === 'use' ? 'text-slate-900' : 'text-primary-600'}`}>
+                                {t.type === 'use' ? '-' : '+'}{t.amount.toLocaleString()}원
+                              </p>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm('정말로 이 거래 내역을 삭제하시겠습니까?')) {
+                                    deleteTransaction(t.id);
+                                  }
+                                }}
+                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover/tx:opacity-100"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 ml-4">
-                            <p className={`text-sm font-black whitespace-nowrap ${t.type === 'use' ? 'text-slate-900' : 'text-primary-600'}`}>
-                              {t.type === 'use' ? '-' : '+'}{t.amount.toLocaleString()}원
-                            </p>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (confirm('정말로 이 거래 내역을 삭제하시겠습니까?')) {
-                                  deleteTransaction(t.id);
-                                }
-                              }}
-                              className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover/tx:opacity-100"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+
+                          {/* Items Breakdown (If available) */}
+                          {t.items && t.items.length > 0 && (
+                            <div className="space-y-1 bg-slate-50 p-3 rounded-2xl border border-slate-100/50 ml-14">
+                              {t.items.map((item, idx) => (
+                                <div key={idx} className="flex justify-between text-[11px] font-bold text-slate-500">
+                                  <span>{item.name} x {item.quantity}</span>
+                                  <span>{(item.price * item.quantity).toLocaleString()}원</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
