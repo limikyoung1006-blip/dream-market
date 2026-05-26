@@ -7,6 +7,35 @@ interface QRScannerProps {
   onScanFailure?: (error: string) => void;
 }
 
+// Web Audio API를 사용하여 큐알 인식 시 "삐" 소리를 재생하는 헬퍼 함수
+const playBeep = () => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioCtx = new AudioContextClass();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.type = 'sine';
+    // 880Hz: 맑고 높은 "삐" 소리 주파수
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+    // 볼륨 설정
+    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+    oscillator.start();
+
+    // 0.12초 뒤에 서서히 볼륨을 줄이면서 정지 (뚝 끊기는 팝 노이즈 방지)
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
+    oscillator.stop(audioCtx.currentTime + 0.12);
+  } catch (error) {
+    console.error('Audio beep failed:', error);
+  }
+};
+
 export const QRScanner = ({ onScanSuccess, onScanFailure }: QRScannerProps) => {
   const [cameras, setCameras] = useState<{ id: string, label: string }[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
@@ -31,6 +60,7 @@ export const QRScanner = ({ onScanSuccess, onScanFailure }: QRScannerProps) => {
         (decodedText) => {
           if (!isScanningRef.current) return;
           isScanningRef.current = false;
+          playBeep(); // 큐알 인식 성공 즉시 삐 소리 재생
           onScanSuccess(decodedText);
         },
         (errorMessage) => {

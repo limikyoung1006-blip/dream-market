@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useMarketStore } from '../store/useMarketStore';
 import { QRScanner } from '../components/QRScanner';
 import { Scan, ArrowLeft, CheckCircle2, AlertCircle, ShoppingBasket, Plus, Minus, Trash2, Package } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export const StorePage = () => {
   const { updatePoints, users, products } = useMarketStore();
@@ -52,8 +53,14 @@ export const StorePage = () => {
     isProcessingRef.current = true;
 
     try {
-      const user = users.find(u => u.id === userId);
-      if (!user) {
+      // Fetch latest user details directly from Supabase to prevent stale points/cache issues
+      const { data: dbUser, error: dbError } = await supabase
+        .from('dream_users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (dbError || !dbUser) {
         alert('등록되지 않은 회원입니다.');
         setResult({ success: false, message: '등록되지 않은 회원입니다.' });
         setStep('result');
@@ -78,7 +85,7 @@ export const StorePage = () => {
         }
       }
 
-      if (user.points < totalAmount) {
+      if (dbUser.points < totalAmount) {
         await updatePoints(
           userId, 
           0, 
@@ -87,8 +94,8 @@ export const StorePage = () => {
           undefined,
           0
         );
-        alert(`잔액이 부족합니다. (현재: ${user.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)`);
-        setResult({ success: false, message: `잔액이 부족합니다. (현재: ${user.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)` });
+        alert(`잔액이 부족합니다. (현재: ${dbUser.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)`);
+        setResult({ success: false, message: `잔액이 부족합니다. (현재: ${dbUser.points.toLocaleString()} 원, 필요: ${totalAmount.toLocaleString()} 원)` });
         setStep('result');
         return;
       }
@@ -125,10 +132,10 @@ export const StorePage = () => {
         setResult({ 
           success: true, 
           message: `${itemsSummary} 구매되었습니다.`,
-          buyerName: user.name,
+          buyerName: dbUser.name,
           purchasedItems: basket,
           total: totalAmount,
-          remainingPoints: user.points - totalAmount
+          remainingPoints: dbUser.points - totalAmount
         });
       } else {
         alert('결제 중 오류가 발생했습니다.');
