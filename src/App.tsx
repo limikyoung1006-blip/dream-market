@@ -1,3 +1,4 @@
+// Vercel build trigger
 import { useState, useEffect } from 'react'
 import { useMarketStore } from './store/useMarketStore'
 import { LoginPage } from './pages/LoginPage'
