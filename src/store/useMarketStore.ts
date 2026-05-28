@@ -20,6 +20,7 @@ interface Product {
   price: number;
   marketPrice: number; // 시장가 (혜택 계산용)
   stock: number;
+  originalStock: number;
 }
 
 interface TransactionItem {
@@ -85,7 +86,8 @@ export const useMarketStore = create<MarketStore>()(
             name: p.name,
             price: p.price,
             marketPrice: p.market_price || 0,
-            stock: p.stock
+            stock: p.stock,
+            originalStock: p.original_stock !== undefined && p.original_stock !== null ? p.original_stock : p.stock
           }));
           const transactions = (transactionsRes.data || []).map(t => ({ 
             id: t.id,
@@ -183,7 +185,8 @@ export const useMarketStore = create<MarketStore>()(
           name: product.name,
           price: product.price,
           market_price: product.marketPrice || 0,
-          stock: product.stock
+          stock: product.stock,
+          original_stock: product.originalStock !== undefined ? product.originalStock : product.stock
         });
         if (error) {
           console.error('Supabase addProduct error:', error);
@@ -198,6 +201,7 @@ export const useMarketStore = create<MarketStore>()(
         if (updates.price !== undefined) dbUpdates.price = updates.price;
         if (updates.stock !== undefined) dbUpdates.stock = updates.stock;
         if (updates.marketPrice !== undefined) dbUpdates.market_price = updates.marketPrice;
+        if (updates.originalStock !== undefined) dbUpdates.original_stock = updates.originalStock;
         
         const { error } = await supabase.from('dream_products').update(dbUpdates).eq('id', productId);
         if (error) {
@@ -222,14 +226,20 @@ export const useMarketStore = create<MarketStore>()(
         const product = get().products.find(p => p.id === productId);
         if (!product) return;
         const newStock = Math.max(0, product.stock + quantity);
+        const newOriginalStock = quantity > 0 
+          ? (product.originalStock || product.stock) + quantity 
+          : (product.originalStock || product.stock);
         
-        const { error } = await supabase.from('dream_products').update({ stock: newStock }).eq('id', productId);
+        const { error } = await supabase.from('dream_products').update({ 
+          stock: newStock,
+          original_stock: newOriginalStock
+        }).eq('id', productId);
         if (error) {
           console.error('Supabase updateStock error:', error);
           return;
         }
         set((state) => ({
-          products: state.products.map(p => p.id === productId ? { ...p, stock: newStock } : p)
+          products: state.products.map(p => p.id === productId ? { ...p, stock: newStock, originalStock: newOriginalStock } : p)
         }));
       },
       

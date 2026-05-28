@@ -183,7 +183,7 @@ export const StorePage = () => {
                   <div className="flex-1">
                     <p className="font-black text-white text-lg md:text-xl tracking-tight leading-tight break-all">{p.name}</p>
                     <div className={`inline-flex items-center gap-1 mt-1 text-[8px] md:text-[9px] font-black uppercase tracking-wider ${p.stock < 10 ? 'text-red-400' : 'text-slate-500'}`}>
-                      <Package size={10} /> 재고 {p.stock}개
+                      <Package size={10} /> 재고 {p.stock}/{p.originalStock || p.stock}개
                     </div>
                   </div>
                   

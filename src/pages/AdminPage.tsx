@@ -36,7 +36,8 @@ export const AdminPage = () => {
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: 0,
-    stock: 0
+    stock: 0,
+    originalStock: 0
   });
 
   const handleAddUser = async (e: React.FormEvent) => {
@@ -97,10 +98,15 @@ export const AdminPage = () => {
       setEditingProduct(null);
     } else {
       const id = `p-${Date.now()}`;
-      await addProduct({ ...newProduct, id, marketPrice: 0 });
+      await addProduct({ 
+        ...newProduct, 
+        id, 
+        marketPrice: 0,
+        originalStock: newProduct.originalStock || newProduct.stock
+      });
     }
     setIsProductModalOpen(false);
-    setNewProduct({ name: '', price: 0, stock: 0 });
+    setNewProduct({ name: '', price: 0, stock: 0, originalStock: 0 });
   };
 
   const openProductEditModal = (product: any) => {
@@ -108,7 +114,8 @@ export const AdminPage = () => {
     setNewProduct({
       name: product.name,
       price: product.price,
-      stock: product.stock
+      stock: product.stock,
+      originalStock: product.originalStock || product.stock
     });
     setIsProductModalOpen(true);
   };
@@ -127,8 +134,8 @@ export const AdminPage = () => {
     let filename = "";
 
     if (type === 'inventory') {
-      headers = "상품ID,상품명,판매가,현재재고\n";
-      rows = products.map(p => `${p.id},${p.name},${p.price},${p.stock}`).join("\n");
+      headers = "상품ID,상품명,판매가,현재재고,최초재고\n";
+      rows = products.map(p => `${p.id},${p.name},${p.price},${p.stock},${p.originalStock || p.stock}`).join("\n");
       filename = `dream_market_inventory_${new Date().toISOString().split('T')[0]}.csv`;
     } else {
       headers = "거래ID,사용자ID,구분,금액,일시,내용\n";
@@ -540,7 +547,7 @@ export const AdminPage = () => {
                     <div className="flex flex-col items-end gap-1.5 min-w-[70px]">
                       <p className="text-primary-600 font-black text-sm leading-none whitespace-nowrap">{product.price.toLocaleString()}원</p>
                       <div className={`px-2 py-1 rounded-md text-[9px] font-black leading-none ${product.stock < 10 ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-500'}`}>
-                        재고: {product.stock}
+                        재고: {product.stock}/{product.originalStock || product.stock}
                       </div>
                     </div>
 
@@ -819,8 +826,29 @@ export const AdminPage = () => {
                 <input type="number" required className="w-full bg-slate-50 p-4 rounded-2xl outline-none font-black text-primary-600" value={newProduct.price || ''} onChange={e => setNewProduct({...newProduct, price: Number(e.target.value)})} />
               </div>
               <div className="space-y-1">
-                <span className="text-[9px] font-black text-slate-400 uppercase ml-1">Remaining Stock</span>
-                <input type="number" required className="w-full bg-slate-50 p-4 rounded-2xl outline-none font-black text-slate-800" value={newProduct.stock || ''} onChange={e => setNewProduct({...newProduct, stock: Number(e.target.value)})} />
+                <span className="text-[9px] font-black text-slate-400 uppercase ml-1">Remaining Stock (남은 재고)</span>
+                <input 
+                  type="number" required 
+                  className="w-full bg-slate-50 p-4 rounded-2xl outline-none font-black text-slate-800" 
+                  value={newProduct.stock || ''} 
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    setNewProduct(prev => ({
+                      ...prev,
+                      stock: val,
+                      originalStock: editingProduct ? prev.originalStock : val
+                    }));
+                  }} 
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] font-black text-slate-400 uppercase ml-1">Original Stock (본래/최초 재고)</span>
+                <input 
+                  type="number" required 
+                  className="w-full bg-slate-50 p-4 rounded-2xl outline-none font-black text-slate-500" 
+                  value={newProduct.originalStock || ''} 
+                  onChange={e => setNewProduct({...newProduct, originalStock: Number(e.target.value)})} 
+                />
               </div>
               <button type="submit" className="w-full bg-primary-600 text-white py-5 rounded-[1.5rem] font-black flex items-center justify-center gap-2 hover:bg-primary-500 transition-all shadow-xl shadow-primary-900/20 mt-4">
                 <Save size={20} /> {editingProduct ? '변경사항 저장' : '상품 정보 저장'}
