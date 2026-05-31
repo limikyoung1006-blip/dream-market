@@ -7,14 +7,68 @@ import { StorePage } from './pages/StorePage'
 import { AdminPage } from './pages/AdminPage'
 import { HomePage } from './pages/HomePage'
 import { LogOut, Wallet, Smartphone, ShieldCheck, Home } from 'lucide-react'
+import { supabase } from './lib/supabase'
 
 function App() {
-  const { currentUser, setCurrentUser, fetchInitialData, isLoading } = useMarketStore()
+  const { currentUser, setCurrentUser, fetchInitialData, fetchInitialDataSilently, isLoading } = useMarketStore()
   const [activeTab, setActiveTab] = useState<'home' | 'user' | 'store' | 'admin'>('home')
 
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
+
+  // 실시간 DB 데이터 동기화 및 5초 주기 백그라운드 폴링 설정
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // 1. 이용자 정보 변경 감지 (포인트 차감/충전 등)
+    const usersChannel = supabase
+      .channel('realtime-users-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'dream_users' },
+        () => {
+          fetchInitialDataSilently();
+        }
+      )
+      .subscribe();
+
+    // 2. 거래 내역 추가 감지
+    const transactionsChannel = supabase
+      .channel('realtime-transactions-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'dream_transactions' },
+        () => {
+          fetchInitialDataSilently();
+        }
+      )
+      .subscribe();
+
+    // 3. 상품 재고 변경 감지
+    const productsChannel = supabase
+      .channel('realtime-products-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'dream_products' },
+        () => {
+          fetchInitialDataSilently();
+        }
+      )
+      .subscribe();
+
+    // 4. 실시간 웹소켓이 차단된 경우를 대비한 5초 주기 백그라운드 폴링 폴백
+    const intervalId = setInterval(() => {
+      fetchInitialDataSilently();
+    }, 5000);
+
+    return () => {
+      supabase.removeChannel(usersChannel);
+      supabase.removeChannel(transactionsChannel);
+      supabase.removeChannel(productsChannel);
+      clearInterval(intervalId);
+    };
+  }, [currentUser, fetchInitialDataSilently]);
 
   if (isLoading) {
     return (

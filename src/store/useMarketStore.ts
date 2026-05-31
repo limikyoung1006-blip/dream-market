@@ -50,6 +50,7 @@ interface MarketStore {
   
   // Actions
   fetchInitialData: () => Promise<void>;
+  fetchInitialDataSilently: () => Promise<void>;
   setCurrentUser: (user: User | null) => void;
   addUser: (user: User) => Promise<void>;
   updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
@@ -113,6 +114,47 @@ export const useMarketStore = create<MarketStore>()(
         } catch (error) {
           console.error('Error fetching initial data:', error);
           set({ isLoading: false });
+        }
+      },
+
+      fetchInitialDataSilently: async () => {
+        try {
+          const [usersRes, productsRes, transactionsRes] = await Promise.all([
+            supabase.from('dream_users').select('*').order('name'),
+            supabase.from('dream_products').select('*').order('name'),
+            supabase.from('dream_transactions').select('*').order('timestamp', { ascending: false })
+          ]);
+
+          const users = (usersRes.data || []).map(u => ({ ...u, address: u.address || '' }));
+          const products = (productsRes.data || []).map(p => ({ 
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            marketPrice: p.market_price || 0,
+            stock: p.stock,
+            originalStock: p.original_stock !== undefined && p.original_stock !== null ? p.original_stock : p.stock
+          }));
+          const transactions = (transactionsRes.data || []).map(t => ({ 
+            id: t.id,
+            userId: t.user_id,
+            type: t.type,
+            amount: t.amount,
+            benefitAmount: t.benefit_amount || 0,
+            timestamp: t.timestamp,
+            description: t.description,
+            items: t.items
+          }));
+
+          set((state) => ({
+            users,
+            products,
+            transactions,
+            currentUser: state.currentUser 
+              ? users.find(u => u.id === state.currentUser?.id) || state.currentUser 
+              : null
+          }));
+        } catch (error) {
+          console.error('Error fetching initial data silently:', error);
         }
       },
       
