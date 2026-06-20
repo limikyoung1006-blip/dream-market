@@ -232,6 +232,7 @@ export const useMarketStore = create<MarketStore>()(
         });
         if (error) {
           console.error('Supabase addProduct error:', error);
+          alert(`상품 등록 실패: ${error.message}`);
           return;
         }
         set((state) => ({ products: [...state.products, product] }));
@@ -248,6 +249,7 @@ export const useMarketStore = create<MarketStore>()(
         const { error } = await supabase.from('dream_products').update(dbUpdates).eq('id', productId);
         if (error) {
           console.error('Supabase updateProduct error:', error);
+          alert(`상품 수정 실패: ${error.message}`);
           return;
         }
         set((state) => ({
@@ -259,6 +261,7 @@ export const useMarketStore = create<MarketStore>()(
         const { error } = await supabase.from('dream_products').delete().eq('id', productId);
         if (error) {
           console.error('Supabase deleteProduct error:', error);
+          alert(`상품 삭제 실패: ${error.message}`);
           return;
         }
         set((state) => ({ products: state.products.filter(p => p.id !== productId) }));
@@ -278,6 +281,7 @@ export const useMarketStore = create<MarketStore>()(
         }).eq('id', productId);
         if (error) {
           console.error('Supabase updateStock error:', error);
+          alert(`재고 수정 실패: ${error.message}`);
           return;
         }
         set((state) => ({
